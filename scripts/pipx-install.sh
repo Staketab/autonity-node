@@ -4,11 +4,11 @@ echo "Installing Pipx..."
 sudo apt update
 
 if ! dpkg -s python3-pip >/dev/null 2>&1; then
-  sudo apt install python3-pip
+  sudo apt install python3-pip -y
 fi
 
 if ! dpkg -s python3.10-venv >/dev/null 2>&1; then
-  sudo apt install python3.10-venv
+  sudo apt install python3.10-venv -y
 fi
 
 if ! command -v pipx >/dev/null 2>&1; then

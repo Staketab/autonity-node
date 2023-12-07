@@ -16,7 +16,7 @@ endif
 .PHONY: 
 
 dir:
-	mkdir -p ${DATADIR}
+	mkdir -p $$(echo ${DATADIR})
 
 pipx:
 	bash ./scripts/pipx-install.sh
