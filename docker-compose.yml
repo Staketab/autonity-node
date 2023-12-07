@@ -1,0 +1,47 @@
+version: "3.8"
+
+services:
+  autonity:
+    image: ${TAG}
+    container_name: autonity
+    restart: always
+    env_file:
+      - $HOME/autonity/.env
+    volumes:
+      - ${DATADIR}:/autonity-chaindata
+    command: >
+      --datadir=/autonity-chaindata
+      --${CHAIN}
+      --maxpeers=${PEERS}
+      --nodekey=${NODEKEY_PATH}
+      --http
+      --http.api="aut,eth,net,txpool,web3,admin"
+      --http.vhosts="*"
+      --http.addr=${HTTP_ADDR}
+      --http.port=8545
+      --ws
+      --ws.api="aut,eth,net,txpool,web3,admin"
+      --ws.addr=${WS_ADDR}
+      --ws.port=8546
+      --nat extip:${YOUR_IP}
+      --metrics
+      --metrics.addr=${METRICS_ADDR}
+      --metrics.port=6060
+      --bootnodes=${BOOTNODES}
+    ports:
+      - ${HTTP_PORT}:8545 # rpc json
+      - ${WS_PORT}:8546 # websocket
+      - ${METRICS_PORT}:6060 # metrics
+      - ${BOOTNODES_PORT}:30303/tcp # bootnodes
+      - ${BOOTNODES_PORT}:30303/udp # bootnodes
+    logging:
+      driver: json-file
+      options:
+        max-size: "500m"
+        max-file: "20"
+    networks:
+      - autonity
+
+networks:
+  autonity:
+    driver: bridge
