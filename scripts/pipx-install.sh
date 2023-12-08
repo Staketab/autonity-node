@@ -11,6 +11,10 @@ if ! dpkg -s python3.10-venv >/dev/null 2>&1; then
   sudo apt install python3.10-venv -y
 fi
 
+if ! dpkg -s python3.8-venv >/dev/null 2>&1; then
+  sudo apt install python3.8-venv -y
+fi
+
 if ! command -v pipx >/dev/null 2>&1; then
   python3 -m pip install --user pipx
 fi

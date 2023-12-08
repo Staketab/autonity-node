@@ -19,7 +19,7 @@ dir:
 	mkdir -p $$(echo ${DATADIR})
 
 pipx:
-	bash ./scripts/pipx-install.sh
+	bash ./scripts/pipx-install.sh && source ~/.bashrc
 
 aut-binary:
 	bash ./scripts/aut-install.sh
