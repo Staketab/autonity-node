@@ -6,7 +6,7 @@ COMPOSE_ALL_FILES := -f docker-compose.yml -f docker-compose.oracle.yml -f docke
 COMPOSE_OPERATOR := -f docker-compose.yml
 COMPOSE_ORACLE := -f docker-compose.oracle.yml
 COMPOSE_NODE_EXPORTER := -f docker-compose.node-exporter.yml
-SERVICES := autonity oracle node-exporter
+SERVICES := autonity autonity_oracle
 
 compose_v2_not_supported = $(shell command docker compose 2> /dev/null)
 ifeq (,$(compose_v2_not_supported))
@@ -51,10 +51,10 @@ up-oracle:
 down-oracle:
 	$(DOCKER_COMPOSE_COMMAND) $(COMPOSE_ORACLE) down -v
 
-logs:
+log:
 	sudo docker logs --follow autonity -f --tail 1000
 
-log:
+logs:
 	$(DOCKER_COMPOSE_COMMAND) logs -f $(SERVICES)
 
 clean:
