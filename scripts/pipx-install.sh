@@ -1,28 +1,49 @@
 #!/bin/bash
 
-echo "Installing Pipx..."
+echo "Removing all installed Python versions..."
+
+# Removing Python 3 versions
+sudo apt-get remove --purge python3.*
+
+# Auto-remove any remaining dependencies
+sudo apt-get autoremove
+
+# Cleaning up
+sudo apt-get autoclean
+
+# Setting required version variables
+PYTHON_VERSION="3.8.12"
+PIPX_VERSION="1.3.3"
+
+# Updating package list
+echo "Updating package list..."
 sudo apt update
 
-if ! dpkg -s python3-pip >/dev/null 2>&1; then
-  sudo apt install python3-pip -y
+# Installing dependencies for building Python
+echo "Installing dependencies for building Python..."
+sudo apt install -y build-essential zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev libssl-dev libreadline-dev libffi-dev libsqlite3-dev wget
+
+# Checking if Python 3.10.12 is already installed
+if ! python3 --version | grep -q "$PYTHON_VERSION"; then
+    echo "Installing Python $PYTHON_VERSION..."
+    cd /tmp
+    wget https://www.python.org/ftp/python/$PYTHON_VERSION/Python-$PYTHON_VERSION.tar.xz
+    tar -xf Python-$PYTHON_VERSION.tar.xz
+    cd Python-$PYTHON_VERSION
+    ./configure --enable-optimizations
+    make -j `nproc`
+    sudo make altinstall
+else
+    echo "Python $PYTHON_VERSION is already installed."
 fi
 
-if ! dpkg -s python3.10-venv >/dev/null 2>&1; then
-  sudo apt install python3.10-venv -y
+# Installing pipx
+if ! pipx --version | grep -q "$PIPX_VERSION"; then
+    echo "Installing pipx $PIPX_VERSION..."
+    python3.8 -m pip install --user pipx==$PIPX_VERSION
+    python3.8 -m pipx ensurepath
+else
+    echo "pipx $PIPX_VERSION is already installed."
 fi
 
-if ! dpkg -s python3.8-venv >/dev/null 2>&1; then
-  sudo apt install python3.8-venv -y
-fi
-
-if ! command -v pipx >/dev/null 2>&1; then
-  python3 -m pip install --user pipx
-fi
-
-if ! grep -q 'export PATH="$HOME/.local/bin:$PATH"' ~/.bashrc; then
-  echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
-fi
-
-source $HOME/.bashrc
-
-echo "Pipx installed!"
+echo "PIPX Installation completed."
