@@ -1,15 +1,29 @@
 #!/bin/bash
 
+echo "Warning: This script will completely remove all installed Python versions from your system."
+echo "This operation cannot be undone and may affect system stability if Python is used by system utilities."
+echo ""
+
+# Ask for user confirmation
+while true; do
+    read -p "Do you wish to continue with the cleanup? (yes/no) " yn
+    case $yn in
+        [Yy]* ) break;;
+        [Nn]* ) echo "Cleanup canceled."; exit;;
+        * ) echo "Please answer yes or no.";;
+    esac
+done
+
 echo "Removing all installed Python versions..."
 
 # Removing Python 3 versions
-sudo apt-get remove --purge python3.*
+sudo apt-get remove --purge python3.* -y
 
 # Auto-remove any remaining dependencies
-sudo apt-get autoremove
+sudo apt-get autoremove -y
 
 # Cleaning up
-sudo apt-get autoclean
+sudo apt-get autoclean -y
 
 # Setting required version variables
 PYTHON_VERSION="3.8.12"
