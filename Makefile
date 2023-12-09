@@ -43,7 +43,13 @@ up:
 	$(DOCKER_COMPOSE_COMMAND) ${COMPOSE_OPERATOR} up -d
 
 down:
-	$(DOCKER_COMPOSE_COMMAND) ${COMPOSE_OPERATOR} down
+	$(DOCKER_COMPOSE_COMMAND) ${COMPOSE_OPERATOR} down -v
+
+up-oracle:
+	$(DOCKER_COMPOSE_COMMAND) ${COMPOSE_OPERATOR} up -d
+
+down-oracle:
+	$(DOCKER_COMPOSE_COMMAND) ${COMPOSE_OPERATOR} down -v
 
 logs:
 	sudo docker logs --follow ${SERVICES} -f --tail 1000
