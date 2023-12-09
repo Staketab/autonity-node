@@ -24,16 +24,16 @@ dir:
 pipx:
 	/bin/bash -c 'source $(USER_HOME)/.bashrc' && bash ./scripts/pipx-install.sh && /bin/bash -c 'source $(USER_HOME)/.bashrc'
 
-aut-binary:
+aut:
 	@./scripts/aut-install.sh
 
 autrc:
 	@./scripts/autrc.sh
 
-aut:
+all:
 	@make dir
 	@make pipx
-	@make aut-binary
+	@make aut
 	@make autrc
 
 up:
