@@ -1,4 +1,7 @@
 include .env
+export
+
+USER_HOME := $(HOME)
 COMPOSE_ALL_FILES := -f docker-compose.yml -f docker-compose.oracle.yml -f docker-compose.node-exporter.yml
 COMPOSE_OPERATOR := -f docker-compose.yml
 COMPOSE_ORACLE := -f docker-compose.oracle.yml
@@ -19,13 +22,13 @@ dir:
 	mkdir -p $$(echo ${DATADIR})
 
 pipx:
-	bash ./scripts/pipx-install.sh && source ~/.bashrc
+	/bin/bash -c 'source $(USER_HOME)/.bashrc' && bash ./scripts/pipx-install.sh && /bin/bash -c 'source $(USER_HOME)/.bashrc'
 
 aut-binary:
-	bash ./scripts/aut-install.sh
+	@./scripts/aut-install.sh
 
 autrc:
-	bash ./scripts/autrc.sh
+	@./scripts/autrc.sh
 
 aut:
 	@make dir
