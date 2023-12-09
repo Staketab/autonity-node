@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ENV_FILE="./.env"
-AUTRC_FILE="#HOME/.autrc"
+AUTRC_FILE="$HOME/.autrc"
 
 if [ -f "$ENV_FILE" ]; then
     export $(grep HTTP_PORT $ENV_FILE)
