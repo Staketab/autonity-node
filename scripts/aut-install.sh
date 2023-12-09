@@ -9,7 +9,7 @@ function check_aut_installed {
 }
 
 echo "Installing Aut..."
-pipx install git+https://github.com/autonity/aut --force
+pipx install git+https://github.com/autonity/aut@${AUT_BINARY_VERSION} --force
 
 if check_aut_installed; then
     echo "The aut installation was completed successfully."
