@@ -22,12 +22,15 @@ dir:
 	mkdir -p $$(echo ${DATADIR})
 
 pipx:
+	@chmod +x ./scripts/pipx-install.sh
 	/bin/bash -c 'source $(USER_HOME)/.bashrc' && bash ./scripts/pipx-install.sh && /bin/bash -c 'source $(USER_HOME)/.bashrc'
 
 aut:
+	@chmod +x ./scripts/aut-install.sh
 	@./scripts/aut-install.sh
 
 autrc:
+	@chmod +x ./scripts/autrc.sh
 	@./scripts/autrc.sh
 
 all:
