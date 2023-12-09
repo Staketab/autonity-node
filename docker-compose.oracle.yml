@@ -6,7 +6,7 @@ services:
     container_name: autonity_oracle
     restart: always
     env_file:
-      - $HOME/autonity/.env
+      - $HOME/autonity-node/.env
     volumes:
       - ${ORACLE_KEYFILE}:/autoracle/oracle.key
       - ${ORACLE_PLUGIN}:/autoracle/plugins-conf.yml

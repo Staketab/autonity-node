@@ -6,14 +6,13 @@ services:
     container_name: autonity
     restart: always
     env_file:
-      - $HOME/autonity/.env
+      - $HOME/autonity-node/.env
     volumes:
       - ${DATADIR}:/autonity-chaindata
     command: >
       --datadir=/autonity-chaindata
       --${CHAIN}
       --maxpeers=${PEERS}
-      --nodekey=${NODEKEY_PATH}
       --http
       --http.api="aut,eth,net,txpool,web3,admin"
       --http.vhosts="*"
@@ -45,3 +44,6 @@ services:
 networks:
   autonity:
     driver: bridge
+
+volumes:
+  autonity-chaindata:

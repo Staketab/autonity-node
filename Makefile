@@ -6,7 +6,7 @@ COMPOSE_ALL_FILES := -f docker-compose.yml -f docker-compose.oracle.yml -f docke
 COMPOSE_OPERATOR := -f docker-compose.yml
 COMPOSE_ORACLE := -f docker-compose.oracle.yml
 COMPOSE_NODE_EXPORTER := -f docker-compose.node-exporter.yml
-SERVICES := operator oracle node-exporter
+SERVICES := autonity oracle node-exporter
 
 compose_v2_not_supported = $(shell command docker compose 2> /dev/null)
 ifeq (,$(compose_v2_not_supported))
@@ -40,16 +40,25 @@ all:
 	@make autrc
 
 up:
-	$(DOCKER_COMPOSE_COMMAND) ${COMPOSE_OPERATOR} up -d
+	$(DOCKER_COMPOSE_COMMAND) $(COMPOSE_OPERATOR) up -d
 
 down:
-	$(DOCKER_COMPOSE_COMMAND) ${COMPOSE_OPERATOR} down -v
+	$(DOCKER_COMPOSE_COMMAND) $(COMPOSE_OPERATOR) down -v
 
 up-oracle:
-	$(DOCKER_COMPOSE_COMMAND) ${COMPOSE_OPERATOR} up -d
+	$(DOCKER_COMPOSE_COMMAND) $(COMPOSE_ORACLE) up -d
 
 down-oracle:
-	$(DOCKER_COMPOSE_COMMAND) ${COMPOSE_OPERATOR} down -v
+	$(DOCKER_COMPOSE_COMMAND) $(COMPOSE_ORACLE) down -v
 
 logs:
-	sudo docker logs --follow ${SERVICES} -f --tail 1000
+	sudo docker logs --follow autonity -f --tail 1000
+
+log:
+	$(DOCKER_COMPOSE_COMMAND) logs -f $(SERVICES)
+
+clean:
+	@make down
+	@make down-oracle
+	@chmod +x ./scripts/clean.sh
+	@./scripts/clean.sh
