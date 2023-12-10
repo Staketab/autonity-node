@@ -9,7 +9,8 @@ function check_aut_installed {
 }
 
 echo "Installing Aut..."
-pipx install git+https://github.com/autonity/aut@${AUT_BINARY_VERSION} --force
+export PATH="$HOME/.local/bin:$PATH"
+pipx install --force 'https://github.com/autonity/aut/releases/download/${AUT_BINARY_VERSION}/${AUT_BINARY_VERSION}-py3-none-any.whl'
 
 if check_aut_installed; then
     echo "The aut installation was completed successfully."
