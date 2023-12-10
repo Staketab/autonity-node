@@ -8,8 +8,8 @@ if command -v python >/dev/null 2>&1 || command -v python3 >/dev/null 2>&1; then
     while true; do
         read -p "Do you wish to continue with the cleanup? (yes/no) " yn
         case $yn in
-            [Yy]* ) cleanup; break;; # Вызываем cleanup только если пользователь согласен
-            [Nn]* ) echo "Cleanup canceled."; break;; # Выходим из цикла, но продолжаем скрипт
+            [Yy]* ) cleanup; break;;
+            [Nn]* ) echo "Cleanup canceled."; break;;
             * ) echo "Please answer yes or no.";;
         esac
     done
