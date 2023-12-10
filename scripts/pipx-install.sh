@@ -1,5 +1,6 @@
 #!/bin/bash
 
+function check {
 if command -v python >/dev/null 2>&1 || command -v python3 >/dev/null 2>&1; then
     echo "Warning: This script will completely remove all installed Python versions from your system."
     echo "This operation cannot be undone and may affect system stability if Python is used by system utilities."
@@ -18,6 +19,7 @@ else
     echo "Python is not installed on this system. No cleanup required."
     install
 fi
+}
 
 function cleanup {
     echo "Removing all installed Python versions..."
@@ -70,3 +72,5 @@ function install {
 
     echo "PIPX Installation completed."
 }
+
+check
