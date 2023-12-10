@@ -8,12 +8,11 @@ if command -v python >/dev/null 2>&1 || command -v python3 >/dev/null 2>&1; then
     while true; do
         read -p "Do you wish to continue with the cleanup? (yes/no) " yn
         case $yn in
-            [Yy]* ) break;;
-            [Nn]* ) echo "Cleanup canceled."; exit;;
+            [Yy]* ) cleanup; break;; # Вызываем cleanup только если пользователь согласен
+            [Nn]* ) echo "Cleanup canceled."; break;; # Выходим из цикла, но продолжаем скрипт
             * ) echo "Please answer yes or no.";;
         esac
     done
-    cleanup
     install
 else
     echo "Python is not installed on this system. No cleanup required."
@@ -23,54 +22,50 @@ fi
 
 function cleanup {
     echo "Removing all installed Python versions..."
-
-    # Removing Python 3 versions
     sudo apt-get remove --purge python3.* -y
-
-    # Auto-remove any remaining dependencies
     sudo apt-get autoremove -y
-
-    # Cleaning up
     sudo apt-get autoclean -y
 }
 
 function install {
-    # Setting required version variables
-    PYTHON_VERSION="3.8.12"
     PIPX_VERSION="1.3.3"
 
-    # Updating package list
     echo "Updating package list..."
     sudo apt update
 
-    # Installing dependencies for building Python
-    echo "Installing dependencies for building Python..."
+    echo "Installing build dependencies..."
     sudo apt install -y build-essential zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev libssl-dev libreadline-dev libffi-dev libsqlite3-dev wget
 
-    # Checking if Python 3.10.12 is already installed
-    if ! python3 --version | grep -q "$PYTHON_VERSION"; then
-        echo "Installing Python $PYTHON_VERSION..."
-        cd /tmp
-        wget https://www.python.org/ftp/python/$PYTHON_VERSION/Python-$PYTHON_VERSION.tar.xz
-        tar -xf Python-$PYTHON_VERSION.tar.xz
-        cd Python-$PYTHON_VERSION
-        ./configure --enable-optimizations
-        make -j `nproc`
-        sudo make altinstall
-    else
-        echo "Python $PYTHON_VERSION is already installed."
+    echo "Installing Python..."
+    sudo apt install -y python3.8 python3.8-venv python3.8-dev python3-pip
+
+    echo "Checking Python version..."
+    python3.8 --version
+
+    echo "Upgrading pip..."
+    python3.8 -m pip install --upgrade pip
+
+    echo "Installing pipx..."
+    python3.8 -m pip install --user pipx
+
+    echo "Installing specific version of pipx..."
+    python3.8 -m pip install --user pipx==${PIPX_VERSION}
+
+    echo "Adding pipx to PATH if not already present..."
+    PIPX_PATH="$HOME/.local/bin"
+    if ! grep -qxF "export PATH=\"$PIPX_PATH:\$PATH\"" ~/.bashrc ; then
+        echo "Exporting pipx path to .bashrc"
+        echo "export PATH=\"$PIPX_PATH:\$PATH\"" >> ~/.bashrc
     fi
 
-    # Installing pipx
-    if ! pipx --version | grep -q "$PIPX_VERSION"; then
-        echo "Installing pipx $PIPX_VERSION..."
-        python3.8 -m pip install --user pipx==$PIPX_VERSION
-        python3.8 -m pipx ensurepath
-    else
-        echo "pipx $PIPX_VERSION is already installed."
+    if [[ ":$PATH:" != *":$PIPX_PATH:"* ]]; then
+        export PATH="$PIPX_PATH:$PATH"
     fi
 
-    echo "PIPX Installation completed."
+    echo "Reloading .bashrc to update environment variables..."
+    source $HOME/.bashrc
+
+    echo "Installation completed."
 }
 
 check
