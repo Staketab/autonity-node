@@ -11,6 +11,7 @@ if [ -f "$ENV_FILE" ]; then
     else
         echo "[aut]" > $AUTRC_FILE
         echo "rpc_endpoint=http://127.0.0.1:${HTTP_PORT}" >> $AUTRC_FILE
+        echo "keyfile=${DATADIR}/keystore/${KEYNAME}.key" >> $AUTRC_FILE
         echo "File $AUTRC_FILE created."
     fi
 else
