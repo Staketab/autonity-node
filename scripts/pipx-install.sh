@@ -30,6 +30,18 @@ function cleanup {
 function install {
     PIPX_VERSION="1.3.3"
 
+    UBUNTU_VERSION=$(lsb_release -r | awk '{print $2}')
+    PYTHON_VERSION="python3.8"
+
+    if [[ "$(printf '%s\n' "20.04" "$UBUNTU_VERSION" | sort -V | head -n1)" == "20.04" ]]; then
+        PYTHON_VERSION="python3.8"
+    else
+        PYTHON_VERSION="python3.10"
+    fi
+
+    echo "Ubuntu version: $UBUNTU_VERSION"
+    echo "Selected Python version: $PYTHON_VERSION"
+
     echo "Updating package list..."
     sudo apt update
 
@@ -37,19 +49,19 @@ function install {
     sudo apt install -y build-essential zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev libssl-dev libreadline-dev libffi-dev libsqlite3-dev wget
 
     echo "Installing Python..."
-    sudo apt install -y python3.8 python3.8-venv python3.8-dev python3-pip
+    sudo apt install -y $PYTHON_VERSION $PYTHON_VERSION-venv $PYTHON_VERSION-dev python3-pip
 
     echo "Checking Python version..."
-    python3.8 --version
+    $PYTHON_VERSION --version
 
     echo "Upgrading pip..."
-    python3.8 -m pip install --upgrade pip
+    $PYTHON_VERSION -m pip install --upgrade pip
 
     echo "Installing pipx..."
-    python3.8 -m pip install --user pipx
+    $PYTHON_VERSION -m pip install --user pipx
 
     echo "Installing specific version of pipx..."
-    python3.8 -m pip install --user pipx==${PIPX_VERSION}
+    $PYTHON_VERSION -m pip install --user pipx==${PIPX_VERSION}
 
     echo "Adding pipx to PATH if not already present..."
     PIPX_PATH="$HOME/.local/bin"
@@ -67,5 +79,6 @@ function install {
 
     echo "Installation completed."
 }
+
 
 check
