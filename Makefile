@@ -95,6 +95,9 @@ get-priv:
 	@chmod +x ./bin/ethkey
 	@/bin/bash -c './bin/ethkey inspect --private $(ORACLE_KEYFILE)'
 
+save-priv:
+	@echo "$(PRIVKEY)" >> $(ORACLE_PRIV_KEYFILE)
+
 genOwnershipProof:
 	@sudo docker run -t -i --volume $$(echo ${DATADIR}):/autonity-chaindata --volume $(ORACLE_PRIV_KEYFILE):/oracle.key --name autonity-proof --rm ghcr.io/autonity/autonity:latest genOwnershipProof --nodekey ./autonity-chaindata/autonity/nodekey --oraclekey oracle.key $(shell aut account info | jq -r '.[].account') | tee /dev/tty | grep -o '0x[0-9a-fA-F]*' > $$(echo ${DATADIR})/signs/proof
 
@@ -120,7 +123,7 @@ list:
 	@aut validator list | grep $(shell aut validator compute-address $(shell aut node info | jq -r '.admin_enode'))
 
 import:
-	@aut account import-private-key $(NODEKEY_PATH) | tee /dev/tty | awk '{print $2}' > $$(echo ${DATADIR})/signs/import
+	@aut account import-private-key $(NODEKEY_PATH) | tee /dev/tty | awk '{print $$2}' > $$(echo ${DATADIR})/signs/import
 
 sign-onboard:
 	@aut account sign-message "validator onboarded" --keyfile $(shell cat $$(echo ${DATADIR})/signs/import) --password $(KEYPASS) | tee /dev/tty | grep -o '0x[0-9a-fA-F]*' > ./signs/sign-onboard
