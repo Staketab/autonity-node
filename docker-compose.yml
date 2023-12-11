@@ -39,10 +39,36 @@ services:
         max-size: "500m"
         max-file: "20"
     networks:
-      - autonity
+      - autonity_network
 
+  autonity_oracle:
+    image: ${ORACLE_TAG}
+    container_name: autonity_oracle
+    restart: always
+    depends_on:
+      - autonity
+    env_file:
+      - $HOME/autonity-node/.env
+    volumes:
+      - ${ORACLE_KEYFILE}:/autoracle/oracle.key
+      - ${ORACLE_PLUGIN}:/autoracle/plugins-conf.yml
+    command: >
+      --key.file="/autoracle/oracle.key"
+      --key.password="${ORACLE_KEYPASS}"
+      --ws="ws://autonity:${WS_PORT}"
+      --plugin.dir="/usr/local/bin/plugins/"
+      --plugin.conf="/autoracle/plugins-conf.yml"
+    logging:
+      driver: json-file
+      options:
+        max-size: "500m"
+        max-file: "20"
+    networks:
+      - autonity_network
+      
 networks:
-  autonity:
+  autonity_network:
+    external: false
     driver: bridge
 
 volumes:
