@@ -36,7 +36,7 @@ autrc:
 	@./scripts/autrc.sh
 
 rpc:
-	@chmod +x ./scripts/autrc.sh
+	@chmod +x ./scripts/sign-rpc.sh
 	@./scripts/sign-rpc.sh
 
 all:
