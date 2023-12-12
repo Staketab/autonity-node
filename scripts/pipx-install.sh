@@ -25,6 +25,7 @@ function cleanup {
     sudo apt-get remove --purge python3.* -y
     sudo apt-get autoremove -y
     sudo apt-get autoclean -y
+    sudo apt install -y lsb-release
 }
 
 function install {
@@ -46,7 +47,7 @@ function install {
     sudo apt update
 
     echo "Installing build dependencies..."
-    sudo apt install -y build-essential zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev libssl-dev libreadline-dev libffi-dev libsqlite3-dev wget
+    sudo apt install -y build-essential zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev libssl-dev libreadline-dev libffi-dev libsqlite3-dev wget lsb-release
 
     echo "Installing Python..."
     sudo apt install -y $PYTHON_VERSION $PYTHON_VERSION-venv $PYTHON_VERSION-dev python3-pip
