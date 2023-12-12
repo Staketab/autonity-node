@@ -35,6 +35,10 @@ autrc:
 	@chmod +x ./scripts/autrc.sh
 	@./scripts/autrc.sh
 
+rpc:
+	@chmod +x ./scripts/autrc.sh
+	@./scripts/sign-rpc.sh
+
 all:
 	@make dir
 	@make pipx
