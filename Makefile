@@ -126,10 +126,10 @@ import:
 	@aut account import-private-key $(NODEKEY_PATH) | tee /dev/tty | awk '{print $$2}' > $$(echo ${DATADIR})/signs/import
 
 sign-onboard:
-	@aut account sign-message "validator onboarded" --keyfile $(shell cat $$(echo ${DATADIR})/signs/import) --password $(KEYPASS) | tee /dev/tty | grep -o '0x[0-9a-fA-F]*' > ./signs/sign-onboard
+	@aut account sign-message "validator onboarded" --keyfile $(shell cat $$(echo ${DATADIR})/signs/import) --password $(KEYPASS) | tee /dev/tty | grep -o '0x[0-9a-fA-F]*' > $$(echo ${DATADIR})/signs/sign-onboard
 
 sign-rpc:
-	@aut account sign-message "public rpc" --keyfile $(shell cat $$(echo ${DATADIR})/signs/import) --password $(KEYPASS) | tee /dev/tty | grep -o '0x[0-9a-fA-F]*' > ./signs/sign-onboard
+	@aut account sign-message "public rpc" --keyfile $(shell cat $$(echo ${DATADIR})/signs/import) --password $(KEYPASS) | tee /dev/tty | grep -o '0x[0-9a-fA-F]*' > $$(echo ${DATADIR})/signs/sign-rpc
 
 send:
 	@aut tx make --to $(RECEPIENT) --value $(AMOUNT) | aut tx sign - | aut tx send -
