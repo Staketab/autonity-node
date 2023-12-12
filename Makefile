@@ -128,6 +128,9 @@ import:
 sign-onboard:
 	@aut account sign-message "validator onboarded" --keyfile $(shell cat $$(echo ${DATADIR})/signs/import) --password $(KEYPASS) | tee /dev/tty | grep -o '0x[0-9a-fA-F]*' > ./signs/sign-onboard
 
+sign-rpc:
+	@aut account sign-message "public rpc" --keyfile $(shell cat $$(echo ${DATADIR})/signs/import) --password $(KEYPASS) | tee /dev/tty | grep -o '0x[0-9a-fA-F]*' > ./signs/sign-onboard
+
 send:
 	@aut tx make --to $(RECEPIENT) --value $(AMOUNT) | aut tx sign - | aut tx send -
 
