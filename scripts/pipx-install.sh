@@ -22,9 +22,8 @@ fi
 
 function cleanup {
     echo "Removing all installed Python versions..."
-    sudo apt-get remove --purge python3.* -y
-    sudo apt-get autoremove -y
-    sudo apt-get autoclean -y
+    non_essential_packages=$(dpkg-query -W -f='${Package} ${Essential}\n' | grep python3 | grep -v 'yes' | awk '{print $1}')
+    sudo apt-get remove --purge $non_essential_packages -y
     sudo apt install -y lsb-release
 }
 
