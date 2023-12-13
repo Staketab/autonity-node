@@ -126,6 +126,9 @@ unbond:
 list:
 	@aut validator list | grep $(shell aut validator compute-address $(shell aut node info | jq -r '.admin_enode'))
 
+get-comm:
+	@aut protocol get-committee | grep $(shell aut validator compute-address $(shell aut node info | jq -r '.admin_enode'))
+	
 import:
 	@aut account import-private-key $(NODEKEY_PATH) | tee /dev/tty | awk '{print $$2}' > $$(echo ${DATADIR})/signs/import
 
