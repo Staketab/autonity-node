@@ -16,8 +16,10 @@ aut account import-private-key ${NODEKEY_PATH} | tee /dev/tty | awk '{print $2}'
 echo -e "${YELLOW}Signing the message 'public rpc'...${NORMAL}"
 aut account sign-message "public rpc" --keyfile $(cat ${DATADIR}/signs/import) --password ${KEYPASS} | tee /dev/tty | grep -o '0x[0-9a-fA-F]*' > ${DATADIR}/signs/sign-rpc
 
+echo -e "${YELLOW}--------------------------------------------${NORMAL}"
 if [ -s "${DATADIR}/signs/sign-rpc" ]; then
     echo -e "${GREEN}Process completed successfully.${NORMAL}"
 else
     echo -e "${RED}Something went wrong: The sign-rpc file is empty.${NORMAL}"
 fi
+echo -e "${YELLOW}--------------------------------------------${NORMAL}"
