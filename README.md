@@ -6,15 +6,9 @@ Setup Autonity RPC and Validator nodes.
 ```bash
 git clone https://github.com/Staketab/autonity-node.git
 cd autonity-node
+git checkout piccadilly
 ```
-Choose the desired branch for either the Bakerloo or Piccadilly testnets:
-```
-git checkout Bakerloo
-```
-или
-```
-git checkout Piccadilly
-```
+
 ## 2. Carefully fill in the Variables in the .env file:
 ```
 KEYPASS             # Account key password
