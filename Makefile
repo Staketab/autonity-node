@@ -18,7 +18,7 @@ else
 endif
 
 # --------------------------
-.PHONY: dir pipx aut autrc all up down up-oracle down-oracle log log-o clean acc get-acc acc-balance oracle-balance acc-oracle get-oracle-acc sign get-enode get-priv genOwnershipProof add-validator compute register bond unbond list import sign-onboard send test
+.PHONY: dir pipx aut autrc rpc validator all up down up-oracle log log-o clean acc get-acc acc-balance oracle-balance acc-oracle get-oracle-acc sign get-enode get-priv save-priv genOwnershipProof add-validator compute register bond unbond list get-comm import sign-onboard sign-rpc send val-info test
 
 dir:
 	@mkdir -p $$(echo ${DATADIR})/signs/
@@ -57,9 +57,6 @@ down:
 
 up-oracle:
 	$(DOCKER_COMPOSE_COMMAND) $(COMPOSE_OPERATOR) up autonity_oracle -d
-
-down-oracle:
-	$(DOCKER_COMPOSE_COMMAND) $(COMPOSE_OPERATOR) down -v
 
 log:
 	sudo docker logs --follow autonity -f --tail 100
@@ -144,6 +141,9 @@ sign-rpc:
 
 send:
 	@aut tx make --to $(RECEPIENT) --value $(AMOUNT) | aut tx sign - | aut tx send -
+
+val-info:
+	@aut validator info
 
 test:
 	@echo $(shell cat $$(echo ${DATADIR})/signs/proof)
