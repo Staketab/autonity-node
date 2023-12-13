@@ -106,8 +106,8 @@ genOwnershipProof:
 	@sudo docker run -t -i --volume $$(echo ${DATADIR}):/autonity-chaindata --volume $(ORACLE_PRIV_KEYFILE):/oracle.key --name autonity-proof --rm ghcr.io/autonity/autonity:latest genOwnershipProof --nodekey ./autonity-chaindata/autonity/nodekey --oraclekey oracle.key $(shell aut account info | jq -r '.[].account') | tee /dev/tty | grep -o '0x[0-9a-fA-F]*' > $$(echo ${DATADIR})/signs/proof
 
 add-validator:
-	@if ! grep -q 'validator=' $(USER_HOME)/.autrc; then \
-		echo "validator=$$(aut validator compute-address $$(aut node info | jq -r '.admin_enode'))" >> $(USER_HOME)/.autrc; \
+	@if ! grep -q 'validator=' $(USER_HOME)/.autrc; then
+		echo "validator=$$(aut validator compute-address $$(aut node info | jq -r '.admin_enode'))" >> $(USER_HOME)/.autrc;
 	fi
 
 compute:

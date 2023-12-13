@@ -8,7 +8,7 @@ GREEN="\033[32m"
 NORMAL="\033[0m"
 
 echo -e "${GREEN}Creating a directory for the keystore...${NORMAL}"
-mkdir -p ${DATADIR}/keystore
+mkdir -p ${DATADIR}/keystore ${DATADIR}/signs
 
 echo -e "${YELLOW}Importing the nodekey...${NORMAL}"
 aut account import-private-key ${NODEKEY_PATH} | tee /dev/tty | awk '{print $2}' > ${DATADIR}/signs/import
