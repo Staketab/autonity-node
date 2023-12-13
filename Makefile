@@ -39,6 +39,10 @@ rpc:
 	@chmod +x ./scripts/sign-rpc.sh
 	@./scripts/sign-rpc.sh
 
+validator:
+	@chmod +x ./scripts/sign-validator.sh
+	@./scripts/sign-validator.sh
+
 all:
 	@make dir
 	@make pipx
