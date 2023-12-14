@@ -145,5 +145,11 @@ send:
 val-info:
 	@aut validator info
 
+claim:
+	@aut validator claim-rewards | aut tx sign - | aut tx send -
+
+activate:
+	@aut  validator activate | aut tx sign - | aut tx send -
+
 test:
 	@echo $(shell cat $$(echo ${DATADIR})/signs/proof)
