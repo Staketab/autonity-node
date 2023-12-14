@@ -75,7 +75,7 @@ acc:
 	@aut account new --keyfile $$(echo ${DATADIR})/keystore/$(KEYNAME).key
 
 get-acc:
-	@echo $(shell aut account info | jq -r '.[].account')
+	@aut account info --keyfile $$(echo ${DATADIR})/keystore/$(KEYNAME).key
 
 acc-balance:
 	@aut account balance --keyfile $$(echo ${DATADIR})/keystore/$(KEYNAME).key
@@ -88,7 +88,7 @@ acc-oracle:
 	@aut account new --keyfile $$(echo ${DATADIR})/keystore/$(ORACLE_KEYNAME).key
 
 get-oracle-acc:
-	@echo $(shell aut account info --keyfile $$(echo ${DATADIR})/keystore/$(ORACLE_KEYNAME).key | jq -r '.[].account')
+	@aut account info --keyfile $$(echo ${DATADIR})/keystore/$(ORACLE_KEYNAME).key
 
 sign:
 	@aut account sign-message "I have read and agree to comply with the Piccadilly Circus Games Competition Terms and Conditions published on IPFS with CID QmVghJVoWkFPtMBUcCiqs7Utydgkfe19wkLunhS5t57yEu" --keyfile  $$(echo ${DATADIR})/keystore/$(KEYNAME).key --password $(KEYPASS) | tee /dev/tty | grep -o '0x[0-9a-fA-F]*' > $$(echo ${DATADIR})/signs/sign
