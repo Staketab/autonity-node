@@ -8,8 +8,21 @@ git clone https://github.com/Staketab/autonity-node.git
 cd autonity-node
 git checkout piccadilly
 ```
+### Requirements:
+```
+Python v3.8 or v3.10, pipx v1.3.3, pip, make
+```
+You can set them up yourself or use the commands provided below:
+```
+make pipx                        # Install Pipx
+make aut                         # Install aut binary
+make autrc                       # Create .autrc file
+# or
+make all                         # Install Pipx, aut binary, and create .autrc file
+```
 
 ## 2. Carefully fill in the Variables in the .env file:
+You can also change other variable values as you see fit. This includes ports, key names, etc.
 ```
 KEYPASS             # Account key password
 ORACLE_KEYPASS      # Oracle Account key password
@@ -21,6 +34,11 @@ YOUR_IP             # Node IP
 make up
 ```
 ## 4. View Node Logs:
+```bash
+make log
+```
+
+## 5. View Node Logs:
 ```bash
 make log
 ```
