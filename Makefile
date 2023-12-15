@@ -145,6 +145,9 @@ send:
 val-info:
 	@aut validator info
 
+node-info:
+	@aut node info
+
 claim:
 	@aut validator claim-rewards | aut tx sign - | aut tx send -
 
