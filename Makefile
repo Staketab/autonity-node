@@ -21,7 +21,7 @@ endif
 .PHONY: dir pipx aut autrc rpc validator all up down up-oracle log log-o clean acc get-acc acc-balance oracle-balance acc-oracle get-oracle-acc sign get-enode get-priv save-priv genOwnershipProof add-validator compute register bond unbond list get-comm import sign-onboard sign-rpc send val-info test
 
 dir:
-	@mkdir -p $$(echo ${DATADIR})/signs/
+	@mkdir -p $$(echo ${DATADIR})/keystore/ $$(echo ${DATADIR})/signs/
 
 pipx:
 	@chmod +x ./scripts/pipx-install.sh
