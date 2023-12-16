@@ -61,8 +61,8 @@ make acc                         # Create an account
 make acc-oracle                  # Create an Oracle account
 make get-acc                     # Get the account address
 make get-oracle-acc              # Get the Oracle account address
-make acc-balance                 # Get the account balance
-make oracle-balance              # Get the Oracle account balance
+make acc-balance                 # Get the account balance. Pass the NTN variable if you need ntn balance or TOKEN=12c1... if token balance. Example: `make acc-balance NTN=1` or `make acc-balance TOKEN=12c1...`
+make oracle-balance              # Get the Oracle account balance. Pass the NTN variable if you need ntn balance or TOKEN=12c1... if token balance. Example: `make oracle-balance NTN=1` or `make oracle-balance TOKEN=12c1...`
 make sign                        # Make a signature "I have read and agree ..."
 make get-enode                   # Get ENODE
 make get-priv                    # Get the PRIVATE KEY of the Oracle account
@@ -78,6 +78,6 @@ make get-comm                    # Check if your validator is in the list of all
 make import                      # Import nodekey, needed for signing "validator onboarded"
 make sign-onboard                # Create the "validator onboarded" signature for the validator node
 make sign-rpc                    # Create the "public rpc" signature for the RPC node
-make send                        # Create a token transfer transaction. Pass the RECEPIENT and AMOUNT. Example: "make send RECEPIENT=0xf14 AMOUNT=0.2"
+make send                        # Create a token transfer transaction. Pass the RECEPIENT and AMOUNT. Example: "make send RECEPIENT=0xf14 AMOUNT=0.2". Pass the NTN variable if you need to transfer ntn or TOKEN=12c1... if transfer token. Example: `make send RECEPIENT=0xf14 AMOUNT=0.2 NTN=1` or `make send RECEPIENT=0xf14 AMOUNT=0.2 TOKEN=12c1...`
 make val-info                    # View validator status
 ```

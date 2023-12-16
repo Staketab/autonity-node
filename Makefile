@@ -78,10 +78,10 @@ get-acc:
 	@aut account info --keyfile $$(echo ${DATADIR})/keystore/$(KEYNAME).key
 
 acc-balance:
-	@aut account balance --keyfile $$(echo ${DATADIR})/keystore/$(KEYNAME).key
+	@aut account balance $(if $(NTN),--ntn) $(if $(TOKEN),--token $(TOKEN)) --keyfile $$(echo ${DATADIR})/keystore/$(KEYNAME).key
 
 oracle-balance:
-	@aut account balance --keyfile $$(echo ${DATADIR})/keystore/$(ORACLE_KEYNAME).key
+	@aut account balance $(if $(NTN),--ntn) $(if $(TOKEN),--token $(TOKEN)) --keyfile $$(echo ${DATADIR})/keystore/$(ORACLE_KEYNAME).key
 
 acc-oracle:
 	@mkdir -p $$(echo ${DATADIR})/keystore
@@ -140,7 +140,7 @@ sign-rpc:
 	@aut account sign-message "public rpc" --keyfile $(shell cat $$(echo ${DATADIR})/signs/import) --password $(KEYPASS) | tee /dev/tty | grep -o '0x[0-9a-fA-F]*' > $$(echo ${DATADIR})/signs/sign-rpc
 
 send:
-	@aut tx make --to $(RECEPIENT) --value $(AMOUNT) | aut tx sign - | aut tx send -
+	@aut tx make --to $(RECEPIENT) --value $(AMOUNT) $(if $(NTN),--ntn) $(if $(TOKEN),--token $(TOKEN)) | aut tx sign - | aut tx send -
 
 val-info:
 	@aut validator info
