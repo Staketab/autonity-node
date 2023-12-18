@@ -48,7 +48,7 @@ all:
 	@make dir
 	@make pipx
 	@make aut
-	@make autrc
+	@make autrc && /bin/bash -c 'source $(USER_HOME)/.bashrc'
 
 up:
 	$(DOCKER_COMPOSE_COMMAND) $(COMPOSE_OPERATOR) up -d autonity
