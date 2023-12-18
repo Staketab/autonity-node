@@ -4,6 +4,7 @@ export
 USER_HOME := $(HOME)
 PRIVKEY ?= 
 AMOUNT ?= 0.5
+PRICE ?= 10.05
 COMPOSE_ALL_FILES := -f docker-compose.yml -f docker-compose.oracle.yml -f docker-compose.node-exporter.yml
 COMPOSE_OPERATOR := -f docker-compose.yml
 COMPOSE_ORACLE := -f docker-compose.oracle.yml
@@ -50,13 +51,13 @@ all:
 	@make autrc
 
 up:
-	$(DOCKER_COMPOSE_COMMAND) $(COMPOSE_OPERATOR) up autonity -d
+	$(DOCKER_COMPOSE_COMMAND) $(COMPOSE_OPERATOR) up -d autonity
 
 down:
 	$(DOCKER_COMPOSE_COMMAND) $(COMPOSE_OPERATOR) down -v
 
 up-oracle:
-	$(DOCKER_COMPOSE_COMMAND) $(COMPOSE_OPERATOR) up autonity_oracle -d
+	$(DOCKER_COMPOSE_COMMAND) $(COMPOSE_OPERATOR) up -d autonity_oracle
 
 log:
 	sudo docker logs --follow autonity -f --tail 100
@@ -66,7 +67,6 @@ log-o:
 
 clean:
 	@make down
-	@make down-oracle
 	@chmod +x ./scripts/clean.sh
 	@./scripts/clean.sh
  
