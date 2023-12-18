@@ -154,5 +154,27 @@ claim:
 activate:
 	@aut  validator activate | aut tx sign - | aut tx send -
 
+api:
+	@chmod +x ./scripts/api.sh
+	@./scripts/api.sh
+
+cex-balance:
+	@https GET https://cax.piccadilly.autonity.org/api/balances/ API-Key:$(shell cat $$(echo ${DATADIR})/api-key | jq -r '.apikey')
+
+get-order:
+	@https GET https://cax.piccadilly.autonity.org/api/orderbooks/ API-Key:$(shell cat $$(echo ${DATADIR})/api-key | jq -r '.apikey')
+
+ntn-quote:
+	@https GET https://cax.piccadilly.autonity.org/api/orderbooks/NTN-USD/quote API-Key:$(shell cat $$(echo ${DATADIR})/api-key | jq -r '.apikey')
+
+atn-quote:
+	@https GET https://cax.piccadilly.autonity.org/api/orderbooks/ATN-USD/quote API-Key:$(shell cat $$(echo ${DATADIR})/api-key | jq -r '.apikey')
+
+buy-ntn:
+	@https POST https://cax.piccadilly.autonity.org/api/orders/ API-Key:$(shell cat $$(echo ${DATADIR})/api-key | jq -r '.apikey') pair=NTN-USD side=bid price=10.04  amount=10
+
+ntn-withdraw:
+	@https POST https://cax.piccadilly.autonity.org/api/withdraws/ API-Key:$(shell cat $$(echo ${DATADIR})/api-key | jq -r '.apikey') symbol=NTN  amount=10
+
 test:
 	@echo $(shell cat $$(echo ${DATADIR})/signs/proof)
