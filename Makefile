@@ -173,11 +173,17 @@ atn-quote:
 buy-ntn:
 	@https POST https://cax.piccadilly.autonity.org/api/orders/ API-Key:$(shell cat $$(echo ${DATADIR})/api-key | jq -r '.apikey') pair=NTN-USD side=bid price=$(PRICE)  amount=$(AMOUNT)
 
+sell-ntn:
+	@https POST https://cax.piccadilly.autonity.org/api/orders/ API-Key:$(shell cat $$(echo ${DATADIR})/api-key | jq -r '.apikey') pair=NTN-USD side=ask price=$(PRICE)  amount=$(AMOUNT)
+
 ntn-withdraw:
 	@https POST https://cax.piccadilly.autonity.org/api/withdraws/ API-Key:$(shell cat $$(echo ${DATADIR})/api-key | jq -r '.apikey') symbol=NTN  amount=$(AMOUNT)
 
 buy-atn:
 	@https POST https://cax.piccadilly.autonity.org/api/orders/ API-Key:$(shell cat $$(echo ${DATADIR})/api-key | jq -r '.apikey') pair=ATN-USD side=bid price=$(PRICE)  amount=$(AMOUNT)
+
+sell-atn:
+	@https POST https://cax.piccadilly.autonity.org/api/orders/ API-Key:$(shell cat $$(echo ${DATADIR})/api-key | jq -r '.apikey') pair=ATN-USD side=ask price=$(PRICE)  amount=$(AMOUNT)
 
 atn-withdraw:
 	@https POST https://cax.piccadilly.autonity.org/api/withdraws/ API-Key:$(shell cat $$(echo ${DATADIR})/api-key | jq -r '.apikey') symbol=ATN  amount=$(AMOUNT)
