@@ -28,6 +28,10 @@ pipx:
 	@chmod +x ./scripts/pipx-install.sh
 	@/bin/bash -c 'source $(USER_HOME)/.bashrc' && bash ./scripts/pipx-install.sh && /bin/bash -c 'source $(USER_HOME)/.bashrc'
 
+httpie:
+	@chmod +x ./scripts/httpie-install.sh
+	@./scripts/httpie-install.sh
+
 aut:
 	@chmod +x ./scripts/aut-install.sh
 	@./scripts/aut-install.sh
