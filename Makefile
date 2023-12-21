@@ -165,7 +165,7 @@ api:
 cex-balance:
 	@https GET https://cax.piccadilly.autonity.org/api/balances/ API-Key:$(shell cat $$(echo ${DATADIR})/api-key | jq -r '.apikey')
 
-get-order:
+get-orderbooks:
 	@https GET https://cax.piccadilly.autonity.org/api/orderbooks/ API-Key:$(shell cat $$(echo ${DATADIR})/api-key | jq -r '.apikey')
 
 ntn-quote:
@@ -191,6 +191,15 @@ sell-atn:
 
 atn-withdraw:
 	@https POST https://cax.piccadilly.autonity.org/api/withdraws/ API-Key:$(shell cat $$(echo ${DATADIR})/api-key | jq -r '.apikey') symbol=ATN  amount=$(AMOUNT)
+
+get-orders:
+	@https GET https://cax.piccadilly.autonity.org/api/orders/ API-Key:$(shell cat $$(echo ${DATADIR})/api-key | jq -r '.apikey')
+
+get-order-id:
+	@https GET https://cax.piccadilly.autonity.org/api/orders/$(ID) API-Key:$(shell cat $$(echo ${DATADIR})/api-key | jq -r '.apikey')
+
+delete-order-id:
+	@https DELETE https://cax.piccadilly.autonity.org/api/orders/$(ID) API-Key:$(shell cat $$(echo ${DATADIR})/api-key | jq -r '.apikey')
 
 test:
 	@echo $(shell cat $$(echo ${DATADIR})/signs/proof)
