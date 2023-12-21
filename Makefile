@@ -193,6 +193,9 @@ atn-withdraw:
 	@https POST https://cax.piccadilly.autonity.org/api/withdraws/ API-Key:$(shell cat $$(echo ${DATADIR})/api-key | jq -r '.apikey') symbol=ATN  amount=$(AMOUNT)
 
 get-orders:
+	@https GET https://cax.piccadilly.autonity.org/api/orders/ API-Key:$(shell cat $$(echo ${DATADIR})/api-key | jq -r '.apikey') | jq '.[] | select(.status=="open")'
+
+get-orders-all:
 	@https GET https://cax.piccadilly.autonity.org/api/orders/ API-Key:$(shell cat $$(echo ${DATADIR})/api-key | jq -r '.apikey')
 
 get-order-id:
