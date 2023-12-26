@@ -130,6 +130,11 @@ list:
 get-comm:
 	@aut protocol get-committee | grep $(shell aut validator compute-address $(shell aut node info | jq -r '.admin_enode'))
 	
+get-val-list:
+	aut protocol get-committee \
+	| jq -r '.[] | [(.voting_power|tonumber / pow(10;18)), .address] | @csv' \
+	| column -t -s"," | tr -d '"' | sort -k1 -n -r | nl
+
 import:
 	@aut account import-private-key $(NODEKEY_PATH) | tee /dev/tty | awk '{print $$2}' > $$(echo ${DATADIR})/signs/import
 
