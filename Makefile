@@ -4,6 +4,7 @@ export
 USER_HOME := $(HOME)
 PRIVKEY ?= 
 AMOUNT ?= 0.5
+PRICE ?= 10.05
 COMPOSE_ALL_FILES := -f docker-compose.yml -f docker-compose.oracle.yml -f docker-compose.node-exporter.yml
 COMPOSE_OPERATOR := -f docker-compose.yml
 COMPOSE_ORACLE := -f docker-compose.oracle.yml
@@ -21,11 +22,15 @@ endif
 .PHONY: dir pipx aut autrc rpc validator all up down up-oracle log log-o clean acc get-acc acc-balance oracle-balance acc-oracle get-oracle-acc sign get-enode get-priv save-priv genOwnershipProof add-validator compute register bond unbond list get-comm import sign-onboard sign-rpc send val-info test
 
 dir:
-	@mkdir -p $$(echo ${DATADIR})/signs/
+	@mkdir -p $$(echo ${DATADIR})/keystore/ $$(echo ${DATADIR})/signs/
 
 pipx:
 	@chmod +x ./scripts/pipx-install.sh
 	@/bin/bash -c 'source $(USER_HOME)/.bashrc' && bash ./scripts/pipx-install.sh && /bin/bash -c 'source $(USER_HOME)/.bashrc'
+
+httpie:
+	@chmod +x ./scripts/httpie-install.sh
+	@./scripts/httpie-install.sh
 
 aut:
 	@chmod +x ./scripts/aut-install.sh
@@ -47,16 +52,16 @@ all:
 	@make dir
 	@make pipx
 	@make aut
-	@make autrc
+	@make autrc && /bin/bash -c 'source $(USER_HOME)/.bashrc'
 
 up:
-	$(DOCKER_COMPOSE_COMMAND) $(COMPOSE_OPERATOR) up autonity -d
+	$(DOCKER_COMPOSE_COMMAND) $(COMPOSE_OPERATOR) up -d autonity
 
 down:
 	$(DOCKER_COMPOSE_COMMAND) $(COMPOSE_OPERATOR) down -v
 
 up-oracle:
-	$(DOCKER_COMPOSE_COMMAND) $(COMPOSE_OPERATOR) up autonity_oracle -d
+	$(DOCKER_COMPOSE_COMMAND) $(COMPOSE_OPERATOR) up -d autonity_oracle
 
 log:
 	sudo docker logs --follow autonity -f --tail 100
@@ -66,7 +71,6 @@ log-o:
 
 clean:
 	@make down
-	@make down-oracle
 	@chmod +x ./scripts/clean.sh
 	@./scripts/clean.sh
  
@@ -75,20 +79,20 @@ acc:
 	@aut account new --keyfile $$(echo ${DATADIR})/keystore/$(KEYNAME).key
 
 get-acc:
-	@echo $(shell aut account info | jq -r '.[].account')
+	@aut account info --keyfile $$(echo ${DATADIR})/keystore/$(KEYNAME).key
 
 acc-balance:
-	@aut account balance --keyfile $$(echo ${DATADIR})/keystore/$(KEYNAME).key
+	@aut account balance $(if $(NTN),--ntn) $(if $(TOKEN),--token $(TOKEN)) --keyfile $$(echo ${DATADIR})/keystore/$(KEYNAME).key
 
 oracle-balance:
-	@aut account balance --keyfile $$(echo ${DATADIR})/keystore/$(ORACLE_KEYNAME).key
+	@aut account balance $(if $(NTN),--ntn) $(if $(TOKEN),--token $(TOKEN)) --keyfile $$(echo ${DATADIR})/keystore/$(ORACLE_KEYNAME).key
 
 acc-oracle:
 	@mkdir -p $$(echo ${DATADIR})/keystore
 	@aut account new --keyfile $$(echo ${DATADIR})/keystore/$(ORACLE_KEYNAME).key
 
 get-oracle-acc:
-	@echo $(shell aut account info --keyfile $$(echo ${DATADIR})/keystore/$(ORACLE_KEYNAME).key | jq -r '.[].account')
+	@aut account info --keyfile $$(echo ${DATADIR})/keystore/$(ORACLE_KEYNAME).key
 
 sign:
 	@aut account sign-message "I have read and agree to comply with the Piccadilly Circus Games Competition Terms and Conditions published on IPFS with CID QmVghJVoWkFPtMBUcCiqs7Utydgkfe19wkLunhS5t57yEu" --keyfile  $$(echo ${DATADIR})/keystore/$(KEYNAME).key --password $(KEYPASS) | tee /dev/tty | grep -o '0x[0-9a-fA-F]*' > $$(echo ${DATADIR})/signs/sign
@@ -145,10 +149,65 @@ sign-rpc:
 	@aut account sign-message "public rpc" --keyfile $(shell cat $$(echo ${DATADIR})/signs/import) --password $(KEYPASS) | tee /dev/tty | grep -o '0x[0-9a-fA-F]*' > $$(echo ${DATADIR})/signs/sign-rpc
 
 send:
-	@aut tx make --to $(RECEPIENT) --value $(AMOUNT) | aut tx sign - | aut tx send -
+	@aut tx make --to $(RECEPIENT) --value $(AMOUNT) $(if $(NTN),--ntn) $(if $(TOKEN),--token $(TOKEN)) | aut tx sign - | aut tx send -
 
 val-info:
 	@aut validator info
+
+node-info:
+	@aut node info
+
+claim:
+	@aut validator claim-rewards | aut tx sign - | aut tx send -
+
+activate:
+	@aut  validator activate | aut tx sign - | aut tx send -
+
+api:
+	@chmod +x ./scripts/api.sh
+	@./scripts/api.sh
+
+cex-balance:
+	@https GET https://cax.piccadilly.autonity.org/api/balances/ API-Key:$(shell cat $$(echo ${DATADIR})/api-key | jq -r '.apikey')
+
+get-orderbooks:
+	@https GET https://cax.piccadilly.autonity.org/api/orderbooks/ API-Key:$(shell cat $$(echo ${DATADIR})/api-key | jq -r '.apikey')
+
+ntn-quote:
+	@https GET https://cax.piccadilly.autonity.org/api/orderbooks/NTN-USD/quote API-Key:$(shell cat $$(echo ${DATADIR})/api-key | jq -r '.apikey')
+
+atn-quote:
+	@https GET https://cax.piccadilly.autonity.org/api/orderbooks/ATN-USD/quote API-Key:$(shell cat $$(echo ${DATADIR})/api-key | jq -r '.apikey')
+
+buy-ntn:
+	@https POST https://cax.piccadilly.autonity.org/api/orders/ API-Key:$(shell cat $$(echo ${DATADIR})/api-key | jq -r '.apikey') pair=NTN-USD side=bid price=$(PRICE)  amount=$(AMOUNT)
+
+sell-ntn:
+	@https POST https://cax.piccadilly.autonity.org/api/orders/ API-Key:$(shell cat $$(echo ${DATADIR})/api-key | jq -r '.apikey') pair=NTN-USD side=ask price=$(PRICE)  amount=$(AMOUNT)
+
+ntn-withdraw:
+	@https POST https://cax.piccadilly.autonity.org/api/withdraws/ API-Key:$(shell cat $$(echo ${DATADIR})/api-key | jq -r '.apikey') symbol=NTN  amount=$(AMOUNT)
+
+buy-atn:
+	@https POST https://cax.piccadilly.autonity.org/api/orders/ API-Key:$(shell cat $$(echo ${DATADIR})/api-key | jq -r '.apikey') pair=ATN-USD side=bid price=$(PRICE)  amount=$(AMOUNT)
+
+sell-atn:
+	@https POST https://cax.piccadilly.autonity.org/api/orders/ API-Key:$(shell cat $$(echo ${DATADIR})/api-key | jq -r '.apikey') pair=ATN-USD side=ask price=$(PRICE)  amount=$(AMOUNT)
+
+atn-withdraw:
+	@https POST https://cax.piccadilly.autonity.org/api/withdraws/ API-Key:$(shell cat $$(echo ${DATADIR})/api-key | jq -r '.apikey') symbol=ATN  amount=$(AMOUNT)
+
+get-orders:
+	@https GET https://cax.piccadilly.autonity.org/api/orders/ API-Key:$(shell cat $$(echo ${DATADIR})/api-key | jq -r '.apikey') | jq '.[] | select(.status=="open")'
+
+get-orders-all:
+	@https GET https://cax.piccadilly.autonity.org/api/orders/ API-Key:$(shell cat $$(echo ${DATADIR})/api-key | jq -r '.apikey')
+
+get-order-id:
+	@https GET https://cax.piccadilly.autonity.org/api/orders/$(ID) API-Key:$(shell cat $$(echo ${DATADIR})/api-key | jq -r '.apikey')
+
+delete-order-id:
+	@https DELETE https://cax.piccadilly.autonity.org/api/orders/$(ID) API-Key:$(shell cat $$(echo ${DATADIR})/api-key | jq -r '.apikey')
 
 test:
 	@echo $(shell cat $$(echo ${DATADIR})/signs/proof)

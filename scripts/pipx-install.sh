@@ -46,10 +46,10 @@ function install {
     sudo apt update
 
     echo "Installing build dependencies..."
-    sudo apt install -y build-essential zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev libssl-dev libreadline-dev libffi-dev libsqlite3-dev wget lsb-release
+    sudo apt install -y build-essential zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev libssl-dev libreadline-dev libffi-dev libsqlite3-dev wget lsb-release make
 
     echo "Installing Python..."
-    sudo apt install -y $PYTHON_VERSION $PYTHON_VERSION-venv $PYTHON_VERSION-dev python3-pip
+    sudo apt install -y python3-lib2to3 python3-distutils python3-pkg-resources python3-setuptools python3-wheel $PYTHON_VERSION $PYTHON_VERSION-venv $PYTHON_VERSION-dev python3-pip
 
     echo "Checking Python version..."
     $PYTHON_VERSION --version

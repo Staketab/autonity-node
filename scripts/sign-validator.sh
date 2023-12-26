@@ -11,6 +11,7 @@ echo -e "${GREEN}Creating directories for the keystore and signs...${NORMAL}"
 mkdir -p ${DATADIR}/keystore ${DATADIR}/signs
 
 echo -e "${YELLOW}Extracting Private Key from keyfile...${NORMAL}"
+chmod +x ./bin/ethkey
 ./bin/ethkey inspect --private ${ORACLE_KEYFILE}
 
 echo -e "${YELLOW}Please enter the Private Key generated in the previous step:${NORMAL}"
