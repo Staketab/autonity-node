@@ -54,6 +54,9 @@ all:
 	@make aut
 	@make autrc && /bin/bash -c 'source $(USER_HOME)/.bashrc'
 
+pull:
+	$(DOCKER_COMPOSE_COMMAND) $(COMPOSE_OPERATOR) pull
+
 up:
 	$(DOCKER_COMPOSE_COMMAND) $(COMPOSE_OPERATOR) up -d autonity
 
