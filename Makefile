@@ -149,7 +149,8 @@ get-val-list:
 	| column -t -s"," | tr -d '"' | sort -k1 -n -r | nl
 
 import:
-	@aut account import-private-key $(NODEKEY_PATH) | tee /dev/tty | awk '{print $$2}' > $$(echo ${DATADIR})/signs/import
+	@echo $(shell head -c 64 $(NODEKEY_PATH)) > $$(echo ${DATADIR})/node.priv
+	@aut account import-private-key ${DATADIR}/node.priv | tee /dev/tty | awk '{print $$2}' > $$(echo ${DATADIR})/signs/import
 
 sign-onboard:
 	@aut account sign-message "validator onboarded" --keyfile $(shell cat $$(echo ${DATADIR})/signs/import) --password $(KEYPASS) | tee /dev/tty | grep -o '0x[0-9a-fA-F]*' > $$(echo ${DATADIR})/signs/sign-onboard
