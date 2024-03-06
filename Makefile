@@ -111,12 +111,11 @@ save-priv:
 	@echo "$(PRIVKEY)" >> $(ORACLE_PRIV_KEYFILE)
 
 genOwnershipProof:
-	@sudo docker run -t -i --volume $$(echo ${DATADIR}):/autonity-chaindata --volume $(ORACLE_PRIV_KEYFILE):/oracle.key --name autonity-proof --rm ghcr.io/autonity/autonity:latest genOwnershipProof --nodekey ./autonity-chaindata/autonity/nodekey --oraclekey oracle.key $(shell aut account info | jq -r '.[].account') | tee /dev/tty | grep -o '0x[0-9a-fA-F]*' > $$(echo ${DATADIR})/signs/proof
+	@sudo docker run -t -i --volume $$(echo ${DATADIR}):/autonity-chaindata --volume $(ORACLE_PRIV_KEYFILE):/oracle.key --name autonity-proof --rm ghcr.io/autonity/autonity:latest genOwnershipProof --autonitykeys ./autonity-chaindata/autonity/autonitykeys --oraclekey oracle.key $(shell aut account info | jq -r '.[].account') | tee /dev/tty | grep -o '0x[0-9a-fA-F]*' > $$(echo ${DATADIR})/signs/proof
 
 add-validator:
-	@if ! grep -q 'validator=' $(USER_HOME)/.autrc; then
-		echo "validator=$$(aut validator compute-address $$(aut node info | jq -r '.admin_enode'))" >> $(USER_HOME)/.autrc;
-	fi
+	@sed -i '/^validator=/d' $(USER_HOME)/.autrc
+	@echo "validator=$$(aut validator compute-address $$(aut node info | jq -r '.admin_enode'))" >> $(USER_HOME)/.autrc
 
 compute:
 	@aut validator compute-address $(shell aut node info | jq -r '.admin_enode')
@@ -130,6 +129,10 @@ bond:
 
 unbond:
 	@aut validator unbond --validator $(shell aut validator compute-address $(shell aut node info | jq -r '.admin_enode')) $(AMOUNT) | aut tx sign - | aut tx send -
+
+get-ckey:
+	@chmod +x ./bin/ethkey
+	@/bin/bash -c './bin/ethkey autinspect $(NODEKEY_PATH)'
 
 list:
 	@aut validator list | grep $(shell aut validator compute-address $(shell aut node info | jq -r '.admin_enode'))
