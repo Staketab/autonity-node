@@ -122,7 +122,7 @@ compute:
 	@make add-validator
 
 register:
-	@aut validator register $(shell aut node info | jq -r '.admin_enode') $(shell aut account info --keyfile $$(echo ${DATADIR})/keystore/$(ORACLE_KEYNAME).key | jq -r '.[].account') $(shell cat $$(echo ${DATADIR})/signs/proof) | aut tx sign - | aut tx send - | tee /dev/tty | grep -o '0x[0-9a-fA-F]*' > $$(echo ${DATADIR})/signs/register
+	@aut validator register $(shell aut node info | jq -r '.admin_enode') $(shell aut account info --keyfile $$(echo ${DATADIR})/keystore/$(ORACLE_KEYNAME).key | jq -r '.[].account') $(shell jq -r '.ConsensusPublicKey' $$(echo ${DATADIR})/signs/consensus-key) $(shell cat $$(echo ${DATADIR})/signs/proof) | aut tx sign - | aut tx send - | tee /dev/tty | grep -o '0x[0-9a-fA-F]*' > $$(echo ${DATADIR})/signs/register
 
 bond:
 	@aut validator bond --validator $(shell aut validator compute-address $(shell aut node info | jq -r '.admin_enode')) $(AMOUNT) | aut tx sign - | aut tx send -
@@ -132,7 +132,7 @@ unbond:
 
 get-ckey:
 	@chmod +x ./bin/ethkey
-	@/bin/bash -c './bin/ethkey autinspect $(NODEKEY_PATH)'
+	@/bin/bash -c './bin/ethkey autinspect $(NODEKEY_PATH) --json' | tee $$(echo ${DATADIR})/signs/consensus-key
 
 list:
 	@aut validator list | grep $(shell aut validator compute-address $(shell aut node info | jq -r '.admin_enode'))
