@@ -134,6 +134,9 @@ get-ckey:
 	@chmod +x ./bin/ethkey
 	@/bin/bash -c './bin/ethkey autinspect $(NODEKEY_PATH) --json' | tee $$(echo ${DATADIR})/signs/consensus-key
 
+ckey-test:
+	@echo $(shell jq -r '.ConsensusPublicKey' $$(echo ${DATADIR})/signs/consensus-key)
+
 list:
 	@aut validator list | grep $(shell aut validator compute-address $(shell aut node info | jq -r '.admin_enode'))
 
