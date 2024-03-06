@@ -135,7 +135,9 @@ make get-priv                    # Get the PRIVATE KEY of the Oracle account
 make save-priv                   # Save the PRIVATE KEY to a file, pass the PRIVKEY variable. Example: "make save-priv PRIVKEY=9190..."
 make genOwnershipProof           # Get the genOwnershipProof proof
 make add-validator               # Add the validator address to the .autrc file to avoid specifying the --validator flag in commands
+make get-ckey
 make register                    # Register the validator in the network
+make import
 make sign-onboard                # Create the "validator onboarded" signature for the validator node
 make get-enode                   # Get ENODE
 ```

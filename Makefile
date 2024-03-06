@@ -105,7 +105,7 @@ get-enode:
 
 get-priv:
 	@chmod +x ./bin/ethkey
-	@/bin/bash -c './bin/ethkey inspect --private $(ORACLE_KEYFILE)'
+	@/bin/bash -c './bin/ethkey inspect --json --private $(ORACLE_KEYFILE)'
 
 save-priv:
 	@echo "$(PRIVKEY)" >> $(ORACLE_PRIV_KEYFILE)

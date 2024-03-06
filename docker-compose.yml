@@ -53,6 +53,7 @@ services:
       - ${ORACLE_KEYFILE}:/autoracle/oracle.key
       - ${ORACLE_PLUGIN}:/autoracle/plugins-conf.yml
     command: >
+      --tip="1"
       --key.file="/autoracle/oracle.key"
       --key.password="${ORACLE_KEYPASS}"
       --ws="ws://autonity:${WS_PORT}"
