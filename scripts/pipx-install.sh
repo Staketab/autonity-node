@@ -32,10 +32,8 @@ function install {
 
     UBUNTU_VERSION=$(lsb_release -r | awk '{print $2}')
     PYTHON_VERSION="python3.8"
-
-    if [[ "$(printf '%s\n' "20.04" "$UBUNTU_VERSION" | sort -V | head -n1)" == "20.04" ]]; then
-        PYTHON_VERSION="python3.8"
-    else
+    
+    if [[ "$(printf '%s\n' "20.04" "$UBUNTU_VERSION" | sort -V | head -n1)" == "20.04" && "$UBUNTU_VERSION" != "20.04" ]]; then
         PYTHON_VERSION="python3.10"
     fi
 
