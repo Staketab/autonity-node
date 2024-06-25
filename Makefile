@@ -97,6 +97,9 @@ acc-oracle:
 get-oracle-acc:
 	@aut account info --keyfile $$(echo ${DATADIR})/keystore/$(ORACLE_KEYNAME).key
 
+acc-sign:
+	@aut account sign-message "I confirm that I own the above address and will use it to take part in on-chain tasks for the Piccadilly Circus Games Competition" --keyfile  $$(echo ${DATADIR})/keystore/$(KEYNAME).key --password $(KEYPASS) | tee /dev/tty | grep -o '0x[0-9a-fA-F]*' > $$(echo ${DATADIR})/signs/acc-sign
+
 sign:
 	@aut account sign-message "I have read and agree to comply with the Piccadilly Circus Games Competition Terms and Conditions published on IPFS with CID QmVghJVoWkFPtMBUcCiqs7Utydgkfe19wkLunhS5t57yEu" --keyfile  $$(echo ${DATADIR})/keystore/$(KEYNAME).key --password $(KEYPASS) | tee /dev/tty | grep -o '0x[0-9a-fA-F]*' > $$(echo ${DATADIR})/signs/sign
 
@@ -111,7 +114,7 @@ save-priv:
 	@echo "$(PRIVKEY)" >> $(ORACLE_PRIV_KEYFILE)
 
 genOwnershipProof:
-	@sudo docker run -t -i --volume $$(echo ${DATADIR}):/autonity-chaindata --volume $(ORACLE_PRIV_KEYFILE):/oracle.key --name autonity-proof --rm ghcr.io/autonity/autonity:latest genOwnershipProof --autonitykeys ./autonity-chaindata/autonity/autonitykeys --oraclekey oracle.key $(shell aut account info | jq -r '.[].account') | tee /dev/tty | grep -o '0x[0-9a-fA-F]*' > $$(echo ${DATADIR})/signs/proof
+	@sudo docker run -t -i --volume $$(echo ${DATADIR}):/autonity-chaindata --volume $(ORACLE_PRIV_KEYFILE):/oracle.key --name autonity-proof --rm ghcr.io/autonity/autonity:latest genOwnershipProof --autonitykeys ./autonity-chaindata/autonity/autonitykeys --oraclekey oracle.key $(shell aut account info | jq -r '.[].account')
 
 add-validator:
 	@sed -i '/^validator=/d' $(USER_HOME)/.autrc
@@ -221,3 +224,6 @@ delete-order-id:
 
 test:
 	@echo $(shell cat $$(echo ${DATADIR})/signs/proof)
+
+version:
+	@sudo docker run -t -i --volume $$(echo ${DATADIR}):/autonity-chaindata --name autonity-proof --rm ghcr.io/autonity/autonity:latest version

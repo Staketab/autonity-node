@@ -11,6 +11,7 @@ services:
       - ${DATADIR}:/autonity-chaindata
     command: >
       --datadir=/autonity-chaindata
+      --syncmode ${SYNCMODE}
       --${CHAIN}
       --maxpeers=${PEERS}
       --http
@@ -33,6 +34,7 @@ services:
       - ${METRICS_PORT}:6060 # metrics
       - ${BOOTNODES_PORT}:30303/tcp # bootnodes
       - ${BOOTNODES_PORT}:30303/udp # bootnodes
+      - 20203:20203
     logging:
       driver: json-file
       options:
