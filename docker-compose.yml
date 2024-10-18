@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   autonity:
     image: ${TAG}
@@ -9,8 +7,10 @@ services:
       - $HOME/autonity-node/.env
     volumes:
       - ${DATADIR}:/autonity-chaindata
+      - ${DATADIR_ANCIENT}:/autonity-chaindata/autonity/chaindata/ancient
     command: >
       --datadir=/autonity-chaindata
+      --datadir.ancient=/autonity-chaindata/autonity/chaindata/ancient
       --syncmode ${SYNCMODE}
       --${CHAIN}
       --maxpeers=${PEERS}
@@ -54,6 +54,7 @@ services:
     volumes:
       - ${ORACLE_KEYFILE}:/autoracle/oracle.key
       - ${ORACLE_PLUGIN}:/autoracle/plugins-conf.yml
+      # - ${ORACLE_PLUGIN_DIR}:/usr/local/bin/plugins
     command: >
       --tip="1"
       --key.file="/autoracle/oracle.key"

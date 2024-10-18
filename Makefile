@@ -63,6 +63,9 @@ up:
 down:
 	$(DOCKER_COMPOSE_COMMAND) $(COMPOSE_OPERATOR) down -v
 
+down-a:
+	$(DOCKER_COMPOSE_COMMAND) $(COMPOSE_OPERATOR) down autonity
+
 up-oracle:
 	$(DOCKER_COMPOSE_COMMAND) $(COMPOSE_OPERATOR) up -d autonity_oracle
 
@@ -167,18 +170,24 @@ send:
 val-info:
 	@aut validator info
 
+val-pause:
+	@aut validator pause | aut tx sign - | aut tx send -
+
+val-activate:
+	@aut validator activate | aut tx sign - | aut tx send -
+
 node-info:
 	@aut node info
 
 claim:
 	@aut validator claim-rewards | aut tx sign - | aut tx send -
 
-activate:
-	@aut  validator activate | aut tx sign - | aut tx send -
-
 api:
 	@chmod +x ./scripts/api.sh
 	@./scripts/api.sh
+
+usdc-transfer:
+	@aut token transfer --token 0x3a60C03a86eEAe30501ce1af04a6C04Cf0188700 0x11F62c273dD23dbe4D1713C5629fc35713Aa5a94 $(AMOUNT) | aut tx sign - | aut tx send -
 
 cex-balance:
 	@https GET https://cax.piccadilly.autonity.org/api/balances/ API-Key:$(shell cat $$(echo ${DATADIR})/api-key | jq -r '.apikey')
@@ -187,25 +196,25 @@ get-orderbooks:
 	@https GET https://cax.piccadilly.autonity.org/api/orderbooks/ API-Key:$(shell cat $$(echo ${DATADIR})/api-key | jq -r '.apikey')
 
 ntn-quote:
-	@https GET https://cax.piccadilly.autonity.org/api/orderbooks/NTN-USD/quote API-Key:$(shell cat $$(echo ${DATADIR})/api-key | jq -r '.apikey')
+	@https GET https://cax.piccadilly.autonity.org/api/orderbooks/NTN-USDC/quote API-Key:$(shell cat $$(echo ${DATADIR})/api-key | jq -r '.apikey')
 
 atn-quote:
-	@https GET https://cax.piccadilly.autonity.org/api/orderbooks/ATN-USD/quote API-Key:$(shell cat $$(echo ${DATADIR})/api-key | jq -r '.apikey')
+	@https GET https://cax.piccadilly.autonity.org/api/orderbooks/ATN-USDC/quote API-Key:$(shell cat $$(echo ${DATADIR})/api-key | jq -r '.apikey')
 
 buy-ntn:
-	@https POST https://cax.piccadilly.autonity.org/api/orders/ API-Key:$(shell cat $$(echo ${DATADIR})/api-key | jq -r '.apikey') pair=NTN-USD side=bid price=$(PRICE)  amount=$(AMOUNT)
+	@https POST https://cax.piccadilly.autonity.org/api/orders/ API-Key:$(shell cat $$(echo ${DATADIR})/api-key | jq -r '.apikey') pair=NTN-USDC side=bid price=$(PRICE)  amount=$(AMOUNT)
 
 sell-ntn:
-	@https POST https://cax.piccadilly.autonity.org/api/orders/ API-Key:$(shell cat $$(echo ${DATADIR})/api-key | jq -r '.apikey') pair=NTN-USD side=ask price=$(PRICE)  amount=$(AMOUNT)
+	@https POST https://cax.piccadilly.autonity.org/api/orders/ API-Key:$(shell cat $$(echo ${DATADIR})/api-key | jq -r '.apikey') pair=NTN-USDC side=ask price=$(PRICE)  amount=$(AMOUNT)
 
 ntn-withdraw:
 	@https POST https://cax.piccadilly.autonity.org/api/withdraws/ API-Key:$(shell cat $$(echo ${DATADIR})/api-key | jq -r '.apikey') symbol=NTN  amount=$(AMOUNT)
 
 buy-atn:
-	@https POST https://cax.piccadilly.autonity.org/api/orders/ API-Key:$(shell cat $$(echo ${DATADIR})/api-key | jq -r '.apikey') pair=ATN-USD side=bid price=$(PRICE)  amount=$(AMOUNT)
+	@https POST https://cax.piccadilly.autonity.org/api/orders/ API-Key:$(shell cat $$(echo ${DATADIR})/api-key | jq -r '.apikey') pair=ATN-USDC side=bid price=$(PRICE)  amount=$(AMOUNT)
 
 sell-atn:
-	@https POST https://cax.piccadilly.autonity.org/api/orders/ API-Key:$(shell cat $$(echo ${DATADIR})/api-key | jq -r '.apikey') pair=ATN-USD side=ask price=$(PRICE)  amount=$(AMOUNT)
+	@https POST https://cax.piccadilly.autonity.org/api/orders/ API-Key:$(shell cat $$(echo ${DATADIR})/api-key | jq -r '.apikey') pair=ATN-USDC side=ask price=$(PRICE)  amount=$(AMOUNT)
 
 atn-withdraw:
 	@https POST https://cax.piccadilly.autonity.org/api/withdraws/ API-Key:$(shell cat $$(echo ${DATADIR})/api-key | jq -r '.apikey') symbol=ATN  amount=$(AMOUNT)
