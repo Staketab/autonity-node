@@ -186,6 +186,7 @@ api:
 	@chmod +x ./scripts/api.sh
 	@./scripts/api.sh
 
+
 usdc-transfer:
 	@aut token transfer --token 0x3a60C03a86eEAe30501ce1af04a6C04Cf0188700 0x11F62c273dD23dbe4D1713C5629fc35713Aa5a94 $(AMOUNT) | aut tx sign - | aut tx send -
 
@@ -235,4 +236,7 @@ test:
 	@echo $(shell cat $$(echo ${DATADIR})/signs/proof)
 
 version:
-	@sudo docker run -t -i --volume $$(echo ${DATADIR}):/autonity-chaindata --name autonity-proof --rm ghcr.io/autonity/autonity:latest version
+	@sudo docker run -t -i --volume $$(echo ${DATADIR}):/autonity-chaindata --name autonity-proof --rm $$(echo ${TAG}) version
+
+oracle-version:
+	@sudo docker run -t -i --volume $$(echo ${DATADIR}):/autonity-chaindata --name autonity-proof --rm $$(echo ${ORACLE_TAG}) version
