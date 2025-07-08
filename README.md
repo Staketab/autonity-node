@@ -212,7 +212,8 @@ make up-oracle                   # Start the Oracle node container
 make down                        # Stop all containers
 make log-o                       # View Oracle node logs
 make clean                       # Stop all containers and clean the DATADIR with the blockchain database
-make get-enode                   # Get ENODE
+make get-enode                   # Get ENODE from running node
+make get-enode-offline           # Generate validator keys and ENODE offline using Docker
 make compute                     # Get the validator address
 make bond                        # Bond tokens, pass the AMOUNT variable. Example: `make bond AMOUNT=0.5`
 make unbond                      # UnBond tokens, pass the AMOUNT variable. Example: `make unbond AMOUNT=0.5`

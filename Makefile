@@ -19,7 +19,7 @@ else
 endif
 
 # --------------------------
-.PHONY: dir pipx aut aut-upgrade autrc rpc validator all up down up-oracle log log-o clean acc get-acc acc-balance oracle-balance acc-oracle get-oracle-acc sign get-enode get-priv save-priv genOwnershipProof add-validator compute register bond unbond list get-comm import sign-onboard sign-rpc send val-info test
+.PHONY: dir pipx aut aut-upgrade autrc rpc validator all up down up-oracle log log-o clean acc get-acc acc-balance oracle-balance acc-oracle get-oracle-acc sign get-enode get-enode-offline get-priv save-priv genOwnershipProof add-validator compute register bond unbond list get-comm import sign-onboard sign-rpc send val-info test
 
 dir:
 	@mkdir -p $(DATADIR)/keystore/ $(DATADIR)/signs/
@@ -34,7 +34,7 @@ httpie:
 
 aut:
 	@chmod +x ./scripts/aut-install.sh
-	@./scripts/aut-install.sh
+	@export PATH="$$HOME/.local/bin:$$PATH" && ./scripts/aut-install.sh
 
 aut-upgrade:
 	@export PATH="$$HOME/.local/bin:$$PATH" && pipx upgrade autonity-cli
@@ -81,32 +81,47 @@ clean:
  
 acc:
 	@mkdir -p $(DATADIR)/keystore
-	@aut account new --keyfile $(DATADIR)/keystore/$(KEYNAME).key
+	@export PATH="$$HOME/.local/bin:$$PATH" && aut account new --keyfile $(DATADIR)/keystore/$(KEYNAME).key
 
 get-acc:
-	@aut account info --keyfile $(DATADIR)/keystore/$(KEYNAME).key
+	@export PATH="$$HOME/.local/bin:$$PATH" && aut account info --keyfile $(DATADIR)/keystore/$(KEYNAME).key
 
 acc-balance:
-	@aut account balance $(if $(NTN),--ntn) $(if $(TOKEN),--token $(TOKEN)) --keyfile $(DATADIR)/keystore/$(KEYNAME).key
+	@export PATH="$$HOME/.local/bin:$$PATH" && aut account balance $(if $(NTN),--ntn) $(if $(TOKEN),--token $(TOKEN)) --keyfile $(DATADIR)/keystore/$(KEYNAME).key
 
 oracle-balance:
-	@aut account balance $(if $(NTN),--ntn) $(if $(TOKEN),--token $(TOKEN)) --keyfile $(DATADIR)/keystore/$(ORACLE_KEYNAME).key
+	@export PATH="$$HOME/.local/bin:$$PATH" && aut account balance $(if $(NTN),--ntn) $(if $(TOKEN),--token $(TOKEN)) --keyfile $(DATADIR)/keystore/$(ORACLE_KEYNAME).key
 
 acc-oracle:
 	@mkdir -p $(DATADIR)/keystore
-	@aut account new --keyfile $(DATADIR)/keystore/$(ORACLE_KEYNAME).key
+	@export PATH="$$HOME/.local/bin:$$PATH" && aut account new --keyfile $(DATADIR)/keystore/$(ORACLE_KEYNAME).key
 
 get-oracle-acc:
-	@aut account info --keyfile $(DATADIR)/keystore/$(ORACLE_KEYNAME).key
+	@export PATH="$$HOME/.local/bin:$$PATH" && aut account info --keyfile $(DATADIR)/keystore/$(ORACLE_KEYNAME).key
 
 acc-sign:
-	@aut account sign-message "I confirm that I own the above address and will use it to take part in on-chain tasks for the Piccadilly Circus Games Competition" --keyfile $(DATADIR)/keystore/$(KEYNAME).key --password $(KEYPASS) | tee /dev/tty | grep -o '0x[0-9a-fA-F]*' > $(DATADIR)/signs/acc-sign || { echo "Failed to generate signature"; exit 1; }
+	@export PATH="$$HOME/.local/bin:$$PATH" && aut account sign-message "I confirm that I own the above address and will use it to take part in on-chain tasks for the Piccadilly Circus Games Competition" --keyfile $(DATADIR)/keystore/$(KEYNAME).key --password $(KEYPASS) | tee /dev/tty | grep -o '0x[0-9a-fA-F]*' > $(DATADIR)/signs/acc-sign || { echo "Failed to generate signature"; exit 1; }
 
 sign:
-	@aut account sign-message "I have read and agree to comply with the Piccadilly Circus Games Competition Terms and Conditions published on IPFS with CID QmVghJVoWkFPtMBUcCiqs7Utydgkfe19wkLunhS5t57yEu" --keyfile $(DATADIR)/keystore/$(KEYNAME).key --password $(KEYPASS) | tee /dev/tty | grep -o '0x[0-9a-fA-F]*' > $(DATADIR)/signs/sign || { echo "Failed to generate signature"; exit 1; }
+	@export PATH="$$HOME/.local/bin:$$PATH" && aut account sign-message "I have read and agree to comply with the Piccadilly Circus Games Competition Terms and Conditions published on IPFS with CID QmVghJVoWkFPtMBUcCiqs7Utydgkfe19wkLunhS5t57yEu" --keyfile $(DATADIR)/keystore/$(KEYNAME).key --password $(KEYPASS) | tee /dev/tty | grep -o '0x[0-9a-fA-F]*' > $(DATADIR)/signs/sign || { echo "Failed to generate signature"; exit 1; }
 
 get-enode:
-	@aut node info | jq -r '.admin_enode'
+	@export PATH="$$HOME/.local/bin:$$PATH" && aut node info | jq -r '.admin_enode'
+
+get-enode-offline:
+	@echo "Generating validator node keys and enode offline using Docker..."
+	@mkdir -p $(DATADIR)/autonity
+	@sudo docker run -t -i --volume $(DATADIR):/autonity-chaindata --name autonity-keygen --rm $(TAG) genAutonityKeys --writeaddress /autonity-chaindata/autonity
+	@echo "Keys generated successfully. Extracting enode..."
+	@if [ -f "$(DATADIR)/autonity/address" ]; then \
+		VALIDATOR_ADDRESS=$$(cat $(DATADIR)/autonity/address); \
+		echo "Validator address: $$VALIDATOR_ADDRESS"; \
+		echo "enode://$$VALIDATOR_ADDRESS@$(YOUR_IP):30303"; \
+		echo "enode://$$VALIDATOR_ADDRESS@$(YOUR_IP):30303" > $(DATADIR)/signs/enode-offline; \
+	else \
+		echo "❌ Failed to generate validator address"; \
+		exit 1; \
+	fi
 
 get-priv:
 	@chmod +x ./bin/ethkey
@@ -116,24 +131,24 @@ save-priv:
 	@echo "$(PRIVKEY)" >> $(ORACLE_PRIV_KEYFILE)
 
 genOwnershipProof:
-	@sudo docker run -t -i --volume $(DATADIR):/autonity-chaindata --volume $(ORACLE_PRIV_KEYFILE):/oracle.key --name autonity-proof --rm ghcr.io/autonity/autonity:latest genOwnershipProof --autonitykeys ./autonity-chaindata/autonity/autonitykeys --oraclekey oracle.key $(shell aut account info | jq -r '.[].account')
+	@sudo docker run -t -i --volume $(DATADIR):/autonity-chaindata --volume $(ORACLE_PRIV_KEYFILE):/oracle.key --name autonity-proof --rm $(TAG) genOwnershipProof --autonitykeys ./autonity-chaindata/autonity/autonitykeys --oraclekey oracle.key $(shell export PATH="$$HOME/.local/bin:$$PATH" && aut account info | jq -r '.[].account')
 
 add-validator:
 	@sed -i '/^validator=/d' $(USER_HOME)/.autrc
-	@echo "validator=$$(aut validator compute-address $$(aut node info | jq -r '.admin_enode'))" >> $(USER_HOME)/.autrc
+	@echo "validator=$$(export PATH="$$HOME/.local/bin:$$PATH" && aut validator compute-address $$(aut node info | jq -r '.admin_enode'))" >> $(USER_HOME)/.autrc
 
 compute:
-	@aut validator compute-address $(shell aut node info | jq -r '.admin_enode')
+	@export PATH="$$HOME/.local/bin:$$PATH" && aut validator compute-address $(shell export PATH="$$HOME/.local/bin:$$PATH" && aut node info | jq -r '.admin_enode')
 	@make add-validator
 
 register:
-	@aut validator register $(shell aut node info | jq -r '.admin_enode') $(shell aut account info --keyfile $(DATADIR)/keystore/$(ORACLE_KEYNAME).key | jq -r '.[].account') $(shell jq -r '.ConsensusPublicKey' $(DATADIR)/signs/consensus-key) $(shell cat $(DATADIR)/signs/proof) | aut tx sign - | aut tx send - | tee /dev/tty | grep -o '0x[0-9a-fA-F]*' > $(DATADIR)/signs/register || { echo "Failed to register validator"; exit 1; }
+	@export PATH="$$HOME/.local/bin:$$PATH" && aut validator register $(shell export PATH="$$HOME/.local/bin:$$PATH" && aut node info | jq -r '.admin_enode') $(shell export PATH="$$HOME/.local/bin:$$PATH" && aut account info --keyfile $(DATADIR)/keystore/$(ORACLE_KEYNAME).key | jq -r '.[].account') $(shell jq -r '.ConsensusPublicKey' $(DATADIR)/signs/consensus-key) $(shell cat $(DATADIR)/signs/proof) | aut tx sign - | aut tx send - | tee /dev/tty | grep -o '0x[0-9a-fA-F]*' > $(DATADIR)/signs/register || { echo "Failed to register validator"; exit 1; }
 
 bond:
-	@aut validator bond --validator $(shell aut validator compute-address $(shell aut node info | jq -r '.admin_enode')) $(AMOUNT) | aut tx sign - | aut tx send -
+	@export PATH="$$HOME/.local/bin:$$PATH" && aut validator bond --validator $(shell export PATH="$$HOME/.local/bin:$$PATH" && aut validator compute-address $(shell aut node info | jq -r '.admin_enode')) $(AMOUNT) | aut tx sign - | aut tx send -
 
 unbond:
-	@aut validator unbond --validator $(shell aut validator compute-address $(shell aut node info | jq -r '.admin_enode')) $(AMOUNT) | aut tx sign - | aut tx send -
+	@export PATH="$$HOME/.local/bin:$$PATH" && aut validator unbond --validator $(shell export PATH="$$HOME/.local/bin:$$PATH" && aut validator compute-address $(shell aut node info | jq -r '.admin_enode')) $(AMOUNT) | aut tx sign - | aut tx send -
 
 get-ckey:
 	@chmod +x ./bin/ethkey
@@ -143,50 +158,50 @@ ckey-test:
 	@echo $(shell jq -r '.ConsensusPublicKey' $(DATADIR)/signs/consensus-key)
 
 list:
-	@aut validator list | grep $(shell aut validator compute-address $(shell aut node info | jq -r '.admin_enode'))
+	@export PATH="$$HOME/.local/bin:$$PATH" && aut validator list | grep $(shell export PATH="$$HOME/.local/bin:$$PATH" && aut validator compute-address $(shell aut node info | jq -r '.admin_enode'))
 
 get-comm:
-	@aut protocol get-committee | grep $(shell aut validator compute-address $(shell aut node info | jq -r '.admin_enode'))
+	@export PATH="$$HOME/.local/bin:$$PATH" && aut protocol get-committee | grep $(shell export PATH="$$HOME/.local/bin:$$PATH" && aut validator compute-address $(shell aut node info | jq -r '.admin_enode'))
 	
 get-val-list:
-	aut protocol get-committee \
+	export PATH="$$HOME/.local/bin:$$PATH" && aut protocol get-committee \
 	| jq -r '.[] | [(.voting_power|tonumber / pow(10;18)), .address] | @csv' \
 	| column -t -s"," | tr -d '"' | sort -k1 -n -r | nl
 
 import:
 	@echo $(shell head -c 64 $(NODEKEY_PATH)) > $(DATADIR)/node.priv
-	@aut account import-private-key $(DATADIR)/node.priv | tee /dev/tty | awk '{print $$2}' > $(DATADIR)/signs/import || { echo "Failed to import private key"; exit 1; }
+	@export PATH="$$HOME/.local/bin:$$PATH" && aut account import-private-key $(DATADIR)/node.priv | tee /dev/tty | awk '{print $$2}' > $(DATADIR)/signs/import || { echo "Failed to import private key"; exit 1; }
 
 sign-onboard:
-	@aut account sign-message "validator onboarded" --keyfile $(shell cat $(DATADIR)/signs/import) --password $(KEYPASS) | tee /dev/tty | grep -o '0x[0-9a-fA-F]*' > $(DATADIR)/signs/sign-onboard || { echo "Failed to generate onboard signature"; exit 1; }
+	@export PATH="$$HOME/.local/bin:$$PATH" && aut account sign-message "validator onboarded" --keyfile $(shell cat $(DATADIR)/signs/import) --password $(KEYPASS) | tee /dev/tty | grep -o '0x[0-9a-fA-F]*' > $(DATADIR)/signs/sign-onboard || { echo "Failed to generate onboard signature"; exit 1; }
 
 sign-rpc:
-	@aut account sign-message "public rpc" --keyfile $(shell cat $(DATADIR)/signs/import) --password $(KEYPASS) | tee /dev/tty | grep -o '0x[0-9a-fA-F]*' > $(DATADIR)/signs/sign-rpc || { echo "Failed to generate RPC signature"; exit 1; }
+	@export PATH="$$HOME/.local/bin:$$PATH" && aut account sign-message "public rpc" --keyfile $(shell cat $(DATADIR)/signs/import) --password $(KEYPASS) | tee /dev/tty | grep -o '0x[0-9a-fA-F]*' > $(DATADIR)/signs/sign-rpc || { echo "Failed to generate RPC signature"; exit 1; }
 
 send:
-	@aut tx make --to $(RECIPIENT) --value $(AMOUNT) $(if $(NTN),--ntn) $(if $(TOKEN),--token $(TOKEN)) | aut tx sign - | aut tx send -
+	@export PATH="$$HOME/.local/bin:$$PATH" && aut tx make --to $(RECIPIENT) --value $(AMOUNT) $(if $(NTN),--ntn) $(if $(TOKEN),--token $(TOKEN)) | aut tx sign - | aut tx send -
 
 val-info:
-	@aut validator info
+	@export PATH="$$HOME/.local/bin:$$PATH" && aut validator info
 
 val-pause:
-	@aut validator pause | aut tx sign - | aut tx send -
+	@export PATH="$$HOME/.local/bin:$$PATH" && aut validator pause | aut tx sign - | aut tx send -
 
 val-activate:
-	@aut validator activate | aut tx sign - | aut tx send -
+	@export PATH="$$HOME/.local/bin:$$PATH" && aut validator activate | aut tx sign - | aut tx send -
 
 node-info:
-	@aut node info
+	@export PATH="$$HOME/.local/bin:$$PATH" && aut node info
 
 claim:
-	@aut validator claim-rewards | aut tx sign - | aut tx send -
+	@export PATH="$$HOME/.local/bin:$$PATH" && aut validator claim-rewards | aut tx sign - | aut tx send -
 
 api:
 	@chmod +x ./scripts/api.sh
 	@./scripts/api.sh
 
 usdc-transfer:
-	@aut token transfer --token 0x3a60C03a86eEAe30501ce1af04a6C04Cf0188700 0x11F62c273dD23dbe4D1713C5629fc35713Aa5a94 $(AMOUNT) | aut tx sign - | aut tx send -
+	@export PATH="$$HOME/.local/bin:$$PATH" && aut token transfer --token 0x3a60C03a86eEAe30501ce1af04a6C04Cf0188700 0x11F62c273dD23dbe4D1713C5629fc35713Aa5a94 $(AMOUNT) | aut tx sign - | aut tx send -
 
 cex-balance:
 	@https GET https://cax.piccadilly.autonity.org/api/balances/ API-Key:$(shell cat $(DATADIR)/api-key | jq -r '.apikey')
@@ -234,7 +249,7 @@ test:
 	@echo $(shell cat $(DATADIR)/signs/proof)
 
 version:
-	@sudo docker run -t -i --volume $(DATADIR):/autonity-chaindata --name autonity-proof --rm $(TAG) version
+	@sudo docker run -t -i --volume $(DATADIR):/autonity-chaindata --name autonity-version --rm $(TAG) version
 
 oracle-version:
-	@sudo docker run -t -i --volume $(DATADIR):/autonity-chaindata --name autonity-proof --rm $(ORACLE_TAG) version
+	@sudo docker run -t -i --volume $(DATADIR):/autonity-chaindata --name autonity-oracle-version --rm $(ORACLE_TAG) version
