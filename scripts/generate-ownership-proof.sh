@@ -1,0 +1,200 @@
+#!/bin/bash
+
+# Generate ownership proof for validator registration
+# This script uses get-account-offline.sh to extract oracle account address
+# and generates ownership proof using Docker
+
+# Load environment variables
+if [ -f ".env" ]; then
+    source .env
+else
+    echo "❌ .env file not found"
+    echo "Please copy example.env to .env and configure it"
+    exit 1
+fi
+
+function check_requirements {
+    echo "=== Checking Requirements ==="
+    
+    if [ -z "$TAG" ]; then
+        echo "❌ TAG is not set in .env file"
+        exit 1
+    fi
+    
+    if [ -z "$ORACLE_KEYFILE" ] || [ ! -f "$ORACLE_KEYFILE" ]; then
+        echo "❌ Oracle keyfile not found: $ORACLE_KEYFILE"
+        echo "Please create oracle account first: make acc-oracle"
+        exit 1
+    fi
+    
+    if [ ! -f "$DATADIR/autonity/autonitykeys" ]; then
+        echo "❌ Validator keys not found: $DATADIR/autonity/autonitykeys"
+        echo "Please generate validator keys first: make get-enode-offline"
+        exit 1
+    fi
+    
+    if [ ! -f "./bin/ethkey" ]; then
+        echo "❌ ethkey binary not found: ./bin/ethkey"
+        echo "Please make sure ethkey binary is available"
+        exit 1
+    fi
+    
+    echo "✅ All requirements met"
+    echo ""
+}
+
+function get_oracle_account {
+    echo "=== Getting Oracle Account Address ==="
+    
+    # Use get-account-offline.sh script
+    if [ -f "./scripts/get-account-offline.sh" ]; then
+        echo "Using get-account-offline script to extract oracle address..."
+        
+        # Source the script to get the function (safely, won't execute main)
+        source ./scripts/get-account-offline.sh
+        
+        # Use the function directly
+        ORACLE_ADDRESS=$(get_account_from_keyfile "$ORACLE_KEYFILE")
+        
+        if [ $? -ne 0 ] || [ -z "$ORACLE_ADDRESS" ]; then
+            echo "❌ Failed to extract oracle address using get-account-offline script"
+            echo "Keyfile: $ORACLE_KEYFILE"
+            exit 1
+        fi
+        
+        # Save oracle address
+        mkdir -p "$DATADIR/signs"
+        echo "$ORACLE_ADDRESS" > "$DATADIR/signs/oracle-address"
+        
+        echo "✅ Oracle account address extracted"
+        echo "   Oracle address: $ORACLE_ADDRESS"
+        echo "   Saved to: $DATADIR/signs/oracle-address"
+        echo ""
+    else
+        echo "❌ get-account-offline.sh script not found"
+        echo "Make sure the script exists: ./scripts/get-account-offline.sh"
+        exit 1
+    fi
+}
+
+function generate_ownership_proof {
+    echo "=== Generating Ownership Proof ==="
+    
+    # Get oracle private key
+    echo "Extracting oracle private key..."
+    chmod +x ./bin/ethkey
+    ORACLE_PRIV_OUTPUT=$(./bin/ethkey inspect --json --private "$ORACLE_KEYFILE" 2>/dev/null)
+    
+    if [ $? -ne 0 ]; then
+        echo "❌ Failed to extract oracle private key"
+        echo "Make sure the oracle keyfile is valid and accessible"
+        exit 1
+    fi
+    
+    ORACLE_PRIVATE_KEY=$(echo "$ORACLE_PRIV_OUTPUT" | jq -r '.PrivateKey' 2>/dev/null)
+    
+    if [ -z "$ORACLE_PRIVATE_KEY" ] || [ "$ORACLE_PRIVATE_KEY" = "null" ]; then
+        echo "❌ Failed to get oracle private key"
+        exit 1
+    fi
+    
+    # Save private key to temporary file
+    echo "$ORACLE_PRIVATE_KEY" > "$ORACLE_PRIV_KEYFILE"
+    
+    # Get oracle account address  
+    ORACLE_ADDRESS=$(cat "$DATADIR/signs/oracle-address")
+    
+    # Generate ownership proof
+    echo "Generating ownership proof..."
+    sudo docker rm -f autonity-proof 2>/dev/null || true
+    
+    PROOF_OUTPUT=$(sudo docker run -t -i --volume "$DATADIR":/autonity-chaindata --volume "$ORACLE_PRIV_KEYFILE":/oracle.key --name autonity-proof --rm "$TAG" genOwnershipProof --autonitykeys ./autonity-chaindata/autonity/autonitykeys --oraclekey oracle.key "$ORACLE_ADDRESS" 2>&1)
+    
+    if [ $? -ne 0 ]; then
+        echo "❌ Failed to generate ownership proof"
+        echo "Docker output:"
+        echo "$PROOF_OUTPUT"
+        exit 1
+    fi
+    
+    # Extract proof from output
+    PROOF=$(echo "$PROOF_OUTPUT" | grep -o '0x[0-9a-fA-F]*' | tail -1)
+    
+    if [ -z "$PROOF" ]; then
+        echo "❌ Failed to extract ownership proof from output"
+        echo "Docker output:"
+        echo "$PROOF_OUTPUT"
+        exit 1
+    fi
+    
+    echo "$PROOF" > "$DATADIR/signs/proof"
+    
+    echo "✅ Ownership proof generated"
+    echo "   Oracle address: $ORACLE_ADDRESS"
+    echo "   Proof: $PROOF"
+    echo "   Saved to: $DATADIR/signs/proof"
+    echo ""
+}
+
+function create_summary {
+    echo "=== Creating Summary ==="
+    
+    ORACLE_ADDRESS=$(cat "$DATADIR/signs/oracle-address" 2>/dev/null)
+    PROOF=$(cat "$DATADIR/signs/proof" 2>/dev/null)
+    
+    cat > "$DATADIR/signs/ownership-proof-summary.txt" << EOF
+=== Autonity Ownership Proof Summary ===
+Generated: $(date)
+Docker Image: $TAG
+
+=== Oracle Information ===
+Oracle Address: $ORACLE_ADDRESS
+Oracle Keyfile: $ORACLE_KEYFILE
+Oracle Private Key File: $ORACLE_PRIV_KEYFILE
+
+=== Ownership Proof ===
+Proof: $PROOF
+
+=== Files Generated ===
+- Oracle address: $DATADIR/signs/oracle-address
+- Ownership proof: $DATADIR/signs/proof
+- Oracle private key: $ORACLE_PRIV_KEYFILE
+- This summary: $DATADIR/signs/ownership-proof-summary.txt
+
+=== Usage ===
+Use the ownership proof for validator registration:
+- Oracle Address: $ORACLE_ADDRESS
+- Ownership Proof: $PROOF
+
+=== Security Note ===
+Keep the oracle private key file secure: $ORACLE_PRIV_KEYFILE
+EOF
+
+    echo "✅ Summary created: $DATADIR/signs/ownership-proof-summary.txt"
+}
+
+function main {
+    echo "=== Generate Ownership Proof ==="
+    echo "This script generates ownership proof for validator registration"
+    echo ""
+    
+    check_requirements
+    get_oracle_account
+    generate_ownership_proof
+    create_summary
+    
+    echo ""
+    echo "🎉 === OWNERSHIP PROOF COMPLETE ==="
+    echo ""
+    echo "📋 Summary:"
+    echo "   Oracle Address: $(cat "$DATADIR/signs/oracle-address")"
+    echo "   Ownership Proof: $(cat "$DATADIR/signs/proof")"
+    echo ""
+    echo "📁 Files saved to: $DATADIR/signs/"
+    echo "📄 Summary: $DATADIR/signs/ownership-proof-summary.txt"
+    echo ""
+    echo "🚀 Ready for validator registration!"
+}
+
+# Run main function
+main 

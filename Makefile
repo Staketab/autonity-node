@@ -19,7 +19,7 @@ else
 endif
 
 # --------------------------
-.PHONY: dir pipx aut aut-upgrade autrc rpc validator all up down up-oracle log log-o clean acc get-acc acc-balance oracle-balance acc-oracle get-oracle-acc sign get-enode get-enode-offline get-priv save-priv genOwnershipProof add-validator compute register bond unbond list get-comm import sign-onboard sign-rpc send val-info test check-env
+.PHONY: dir pipx aut aut-upgrade autrc rpc validator all up down up-oracle log log-o clean acc get-acc acc-balance oracle-balance acc-oracle get-oracle-acc sign get-enode get-enode-offline get-account-offline generate-ownership-proof prepare-validator-offline get-priv save-priv genOwnershipProof add-validator compute register bond unbond list get-comm import sign-onboard sign-rpc send val-info test check-env
 
 dir:
 	@mkdir -p $(DATADIR)/keystore/ $(DATADIR)/signs/
@@ -90,6 +90,10 @@ acc:
 get-acc:
 	@export PATH="$$HOME/.local/bin:$$PATH" && aut account info --keyfile $(DATADIR)/keystore/$(KEYNAME).key
 
+get-account-offline:
+	@chmod +x ./scripts/get-account-offline.sh
+	@./scripts/get-account-offline.sh $(KEYFILE)
+
 acc-balance:
 	@export PATH="$$HOME/.local/bin:$$PATH" && aut account balance $(if $(NTN),--ntn) $(if $(TOKEN),--token $(TOKEN)) --keyfile $(DATADIR)/keystore/$(KEYNAME).key
 
@@ -115,6 +119,14 @@ get-enode:
 get-enode-offline:
 	@chmod +x ./scripts/get-enode-offline.sh
 	@./scripts/get-enode-offline.sh
+
+generate-ownership-proof:
+	@chmod +x ./scripts/generate-ownership-proof.sh
+	@./scripts/generate-ownership-proof.sh
+
+prepare-validator-offline:
+	@chmod +x ./scripts/prepare-validator-offline.sh
+	@./scripts/prepare-validator-offline.sh
 
 get-priv:
 	@chmod +x ./bin/ethkey

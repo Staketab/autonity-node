@@ -235,7 +235,10 @@ make down                        # Stop all containers
 make log-o                       # View Oracle node logs
 make clean                       # Stop all containers and clean the DATADIR with the blockchain database
 make get-enode                   # Get ENODE from running node
-make get-enode-offline           # Generate validator keys and ENODE offline using Docker (saves summary file)
+make get-enode-offline           # Generate validator keys and ENODE offline using Docker
+make get-account-offline         # Extract account address from keyfile (no running node required)
+make generate-ownership-proof    # Generate ownership proof for validator registration
+make prepare-validator-offline   # Complete validator setup offline (recommended)
 make compute                     # Get the validator address
 make bond                        # Bond tokens, pass the AMOUNT variable. Example: `make bond AMOUNT=0.5`
 make unbond                      # UnBond tokens, pass the AMOUNT variable. Example: `make unbond AMOUNT=0.5`
@@ -246,18 +249,51 @@ make val-info                    # View validator status
 make aut-upgrade                 # Upgrade aut binary to latest version (fixes ImportError issues)
 ```
 
-### Offline Key Generation
+### Offline Operations
 
-The `make get-enode-offline` command generates validator keys without requiring a running node:
+#### Individual Commands:
+- `make get-enode-offline` - Generate validator keys and enode URL
+- `make get-account-offline [KEYFILE]` - Extract address from keyfile (adds 0x prefix)
+- `make generate-ownership-proof` - Generate ownership proof for validator registration
+- `make prepare-validator-offline` - **Complete validator setup** (combines all steps)
 
-- **Generates**: Node address, public keys, and enode URL
-- **Saves to**: 
-  - `$(DATADIR)/autonity/` - Validator keys
-  - `$(DATADIR)/signs/enode-offline` - Enode URL
-  - `$(DATADIR)/signs/keys-summary.txt` - Complete summary
-- **Requires**: `YOUR_IP` set in `.env` file
+#### Complete Offline Validator Setup:
 
-To view generated enode: `cat $(DATADIR)/signs/enode-offline`
+The `make prepare-validator-offline` command performs a complete validator setup without requiring a running node:
+
+**What it does:**
+1. Generates validator keys and enode URL
+2. Extracts consensus public key
+3. Gets oracle account address from keyfile (using separate script)
+4. Generates ownership proof (using separate script)
+5. Creates comprehensive summary
+
+**Individual Steps:**
+- `make get-enode-offline` - Generate validator keys and enode
+- `make generate-ownership-proof` - Generate ownership proof (requires oracle keyfile and validator keys)
+- `make prepare-validator-offline` - Run all steps together
+
+**Requirements:**
+- `YOUR_IP` set in `.env` file
+- Oracle account created (`make acc-oracle`)
+
+**Generates:**
+- `$(DATADIR)/signs/enode-offline` - Enode URL for registration
+- `$(DATADIR)/signs/proof` - Ownership proof
+- `$(DATADIR)/signs/validator-setup-summary.txt` - Complete summary
+- All necessary keys and certificates
+
+**Usage:**
+```bash
+# 1. Create oracle account first
+make acc-oracle
+
+# 2. Run complete validator setup
+make prepare-validator-offline
+
+# 3. View summary
+cat $(DATADIR)/signs/validator-setup-summary.txt
+```
 
 <a name="support"></a>
 # Support
