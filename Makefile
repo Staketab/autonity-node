@@ -19,10 +19,14 @@ else
 endif
 
 # --------------------------
-.PHONY: dir pipx aut aut-upgrade autrc rpc validator all up down up-oracle log log-o clean acc get-acc acc-balance oracle-balance acc-oracle get-oracle-acc sign get-enode get-enode-offline get-priv save-priv genOwnershipProof add-validator compute register bond unbond list get-comm import sign-onboard sign-rpc send val-info test
+.PHONY: dir pipx aut aut-upgrade autrc rpc validator all up down up-oracle log log-o clean acc get-acc acc-balance oracle-balance acc-oracle get-oracle-acc sign get-enode get-enode-offline get-priv save-priv genOwnershipProof add-validator compute register bond unbond list get-comm import sign-onboard sign-rpc send val-info test check-env
 
 dir:
 	@mkdir -p $(DATADIR)/keystore/ $(DATADIR)/signs/
+
+check-env:
+	@chmod +x ./scripts/check-env.sh
+	@./scripts/check-env.sh
 
 pipx:
 	@chmod +x ./scripts/pipx-install.sh

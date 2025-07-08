@@ -45,8 +45,11 @@ function generate_keys {
     echo "Command: docker run --volume $DATADIR:/autonity-chaindata $TAG genAutonityKeys --writeaddress /autonity-chaindata/autonity/autonitykeys"
     echo ""
     
-    # Capture output from Docker command
-    OUTPUT=$(sudo docker run -t -i --volume "$DATADIR":/autonity-chaindata --name autonity-keygen --rm "$TAG" genAutonityKeys --writeaddress /autonity-chaindata/autonity/autonitykeys 2>&1)
+    # Remove existing container if it exists
+    sudo docker rm -f autonity-keygen 2>/dev/null || true
+    
+    # Capture output from Docker command (removed -t -i flags to avoid hanging)
+    OUTPUT=$(sudo docker run --volume "$DATADIR":/autonity-chaindata --name autonity-keygen --rm "$TAG" genAutonityKeys --writeaddress /autonity-chaindata/autonity/autonitykeys 2>&1)
     
     if [ $? -ne 0 ]; then
         echo "❌ Docker command failed"

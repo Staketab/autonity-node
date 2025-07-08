@@ -40,6 +40,7 @@ git checkout piccadilly
 # Install components:
 You can set them up yourself or use the commands provided below:
 ```
+make check-env                   # Check .env file configuration
 make pipx                        # Install Pipx
 make httpie                      # Install http
 make aut                         # Install aut binary
@@ -55,12 +56,17 @@ make all                         # Install Pipx, httpie, make, aut binary, and c
 
 <a name="set-variables"></a>
 ## Set variables:
-Carefully fill in the Variables in the `.env` file.  
-You can also change other variable values as you see fit. This includes ports, key names, etc.
+First, copy the example configuration file and edit it:
+```bash
+cp example.env .env
+```
+
+Then carefully fill in the variables in the `.env` file:
 ```
 KEYPASS             # Account key password
 ORACLE_KEYPASS      # Oracle Account key password
 YOUR_IP             # Your server's public IP address (Required for enode generation)
+CHAIN               # Network: piccadilly or bakerloo
 ```
 
 **Important:** Make sure to set `YOUR_IP` to your server's public IP address. This is required for:
@@ -70,6 +76,12 @@ YOUR_IP             # Your server's public IP address (Required for enode genera
 Example:
 ```bash
 YOUR_IP=192.168.1.100
+CHAIN=piccadilly
+```
+
+**Check your configuration:**
+```bash
+make check-env                   # Verify .env file is properly configured
 ```
 
 <a name="start-the-autonity-node"></a>
@@ -217,6 +229,7 @@ make delete-order-id             # DELETE order by ID. Pass the ID variable. Exa
 # Other useful commands
 
 ```bash
+make check-env                   # Check .env file configuration
 make up-oracle                   # Start the Oracle node container
 make down                        # Stop all containers
 make log-o                       # View Oracle node logs
