@@ -21,12 +21,6 @@ function check_requirements {
         exit 1
     fi
     
-    if [ -z "$ORACLE_KEYPASS" ]; then
-        echo "❌ ORACLE_KEYPASS is not set in .env file"
-        echo "Please set the oracle account password in .env file"
-        exit 1
-    fi
-    
     if [ -z "$ORACLE_KEYFILE" ] || [ ! -f "$ORACLE_KEYFILE" ]; then
         echo "❌ Oracle keyfile not found: $ORACLE_KEYFILE"
         echo "Please create oracle account first: make acc-oracle"
@@ -43,6 +37,13 @@ function check_requirements {
         echo "❌ ethkey binary not found: ./bin/ethkey"
         echo "Please make sure ethkey binary is available"
         exit 1
+    fi
+    
+    # Check if password is set in .env or will be requested interactively
+    if [ -n "$ORACLE_KEYPASS" ]; then
+        echo "🔑 Oracle password found in .env file"
+    else
+        echo "🔑 Oracle password will be requested interactively"
     fi
     
     echo "✅ All requirements met"
@@ -88,30 +89,51 @@ function generate_ownership_proof {
     
     # Get oracle private key
     echo "Extracting oracle private key..."
-    
-    # Check if oracle password is set
-    if [ -z "$ORACLE_KEYPASS" ]; then
-        echo "❌ ORACLE_KEYPASS is not set in .env file"
-        echo "Please set the oracle account password in .env file"
-        exit 1
-    fi
-    
     chmod +x ./bin/ethkey
     echo "Using oracle keyfile: $ORACLE_KEYFILE"
     
-    # Pass password via stdin to ethkey
-    ORACLE_PRIV_OUTPUT=$(echo "$ORACLE_KEYPASS" | ./bin/ethkey inspect --json --private "$ORACLE_KEYFILE" 2>/dev/null)
+    # Try to extract private key with password from .env first
+    ORACLE_PRIV_OUTPUT=""
+    if [ -n "$ORACLE_KEYPASS" ]; then
+        echo "Trying password from .env file..."
+        ORACLE_PRIV_OUTPUT=$(echo "$ORACLE_KEYPASS" | ./bin/ethkey inspect --json --private "$ORACLE_KEYFILE" 2>/dev/null)
+        
+        if [ $? -eq 0 ] && [ -n "$ORACLE_PRIV_OUTPUT" ]; then
+            echo "✅ Successfully extracted private key using .env password"
+        else
+            echo "❌ Failed to extract private key with .env password"
+            ORACLE_PRIV_OUTPUT=""
+        fi
+    fi
     
-    if [ $? -ne 0 ]; then
-        echo "❌ Failed to extract oracle private key"
-        echo "Possible reasons:"
-        echo "- Wrong password in ORACLE_KEYPASS"
-        echo "- Keyfile is corrupted or invalid"
-        echo "- ethkey binary issue"
+    # If .env password failed or not set, ask user for password
+    if [ -z "$ORACLE_PRIV_OUTPUT" ]; then
         echo ""
-        echo "Debug: trying with error output..."
-        echo "$ORACLE_KEYPASS" | ./bin/ethkey inspect --json --private "$ORACLE_KEYFILE"
-        exit 1
+        echo "Please enter the Oracle account password:"
+        read -s -p "Password: " USER_PASSWORD
+        echo ""
+        
+        if [ -z "$USER_PASSWORD" ]; then
+            echo "❌ No password provided"
+            exit 1
+        fi
+        
+        echo "Trying with provided password..."
+        ORACLE_PRIV_OUTPUT=$(echo "$USER_PASSWORD" | ./bin/ethkey inspect --json --private "$ORACLE_KEYFILE" 2>/dev/null)
+        
+        # Clear password from memory for security
+        unset USER_PASSWORD
+        
+        if [ $? -ne 0 ] || [ -z "$ORACLE_PRIV_OUTPUT" ]; then
+            echo "❌ Failed to extract oracle private key with provided password"
+            echo "Please check:"
+            echo "- Password is correct"
+            echo "- Keyfile is valid: $ORACLE_KEYFILE"
+            echo "- ethkey binary is working"
+            exit 1
+        fi
+        
+        echo "✅ Successfully extracted private key with provided password"
     fi
     
     ORACLE_PRIVATE_KEY=$(echo "$ORACLE_PRIV_OUTPUT" | jq -r '.PrivateKey' 2>/dev/null)
