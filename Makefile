@@ -110,14 +110,16 @@ get-enode:
 
 get-enode-offline:
 	@echo "Generating validator node keys and enode offline using Docker..."
-	@mkdir -p $(DATADIR)/autonity
-	@sudo docker run -t -i --volume $(DATADIR):/autonity-chaindata --name autonity-keygen --rm $(TAG) genAutonityKeys --writeaddress /autonity-chaindata/autonity
+	@mkdir -p $(DATADIR)/keys $(DATADIR)/signs
+	@sudo docker run -t -i --volume $(DATADIR):/autonity-chaindata --name autonity-keygen --rm $(TAG) genAutonityKeys --writeaddress /autonity-chaindata/keys
 	@echo "Keys generated successfully. Extracting enode..."
-	@if [ -f "$(DATADIR)/autonity/address" ]; then \
-		VALIDATOR_ADDRESS=$$(cat $(DATADIR)/autonity/address); \
+	@if [ -f "$(DATADIR)/keys/autonitykeys" ]; then \
+		VALIDATOR_ADDRESS=$$(cat $(DATADIR)/keys/autonitykeys); \
 		echo "Validator address: $$VALIDATOR_ADDRESS"; \
 		echo "enode://$$VALIDATOR_ADDRESS@$(YOUR_IP):30303"; \
 		echo "enode://$$VALIDATOR_ADDRESS@$(YOUR_IP):30303" > $(DATADIR)/signs/enode-offline; \
+		echo "Keys saved to: $(DATADIR)/keys/"; \
+		echo "Enode saved to: $(DATADIR)/signs/enode-offline"; \
 	else \
 		echo "❌ Failed to generate validator address"; \
 		exit 1; \
