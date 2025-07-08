@@ -96,36 +96,57 @@ function generate_ownership_proof {
     ORACLE_PRIV_OUTPUT=""
     if [ -n "$ORACLE_KEYPASS" ]; then
         echo "Trying password from .env file..."
-        ORACLE_PRIV_OUTPUT=$(echo "$ORACLE_KEYPASS" | ./bin/ethkey inspect --json --private "$ORACLE_KEYFILE" 2>/dev/null)
         
-        if [ $? -eq 0 ] && [ -n "$ORACLE_PRIV_OUTPUT" ]; then
+        # Try multiple methods to pass password to ethkey
+        # Method 1: printf with newline
+        ORACLE_PRIV_OUTPUT=$(printf '%s\n' "$ORACLE_KEYPASS" | ./bin/ethkey inspect --json --private "$ORACLE_KEYFILE" 2>/dev/null)
+        
+        # Method 2: If method 1 failed, try with expect if available
+        if [ -z "$ORACLE_PRIV_OUTPUT" ] && command -v expect >/dev/null 2>&1; then
+            echo "Trying with expect..."
+            ORACLE_PRIV_OUTPUT=$(expect -c "
+                spawn ./bin/ethkey inspect --json --private $ORACLE_KEYFILE
+                expect \"Password:\"
+                send \"$ORACLE_KEYPASS\r\"
+                expect eof
+            " 2>/dev/null)
+        fi
+        
+        # Method 3: Use here-string
+        if [ -z "$ORACLE_PRIV_OUTPUT" ]; then
+            echo "Trying with here-string..."
+            ORACLE_PRIV_OUTPUT=$(./bin/ethkey inspect --json --private "$ORACLE_KEYFILE" <<< "$ORACLE_KEYPASS" 2>/dev/null)
+        fi
+        
+        # Method 4: Use temporary file
+        if [ -z "$ORACLE_PRIV_OUTPUT" ]; then
+            echo "Trying with temporary file..."
+            TEMP_PASSWD_FILE=$(mktemp)
+            echo "$ORACLE_KEYPASS" > "$TEMP_PASSWD_FILE"
+            ORACLE_PRIV_OUTPUT=$(./bin/ethkey inspect --json --private "$ORACLE_KEYFILE" < "$TEMP_PASSWD_FILE" 2>/dev/null)
+            rm -f "$TEMP_PASSWD_FILE"
+        fi
+        
+        if [ -n "$ORACLE_PRIV_OUTPUT" ] && echo "$ORACLE_PRIV_OUTPUT" | grep -q "PrivateKey"; then
             echo "✅ Successfully extracted private key using .env password"
         else
-            echo "❌ Failed to extract private key with .env password"
+            echo "❌ Failed to extract private key with .env password using automated methods"
             ORACLE_PRIV_OUTPUT=""
         fi
     fi
     
-    # If .env password failed or not set, ask user for password
+    # If .env password failed or not set, ask user for interactive input
     if [ -z "$ORACLE_PRIV_OUTPUT" ]; then
         echo ""
-        echo "Please enter the Oracle account password:"
-        read -s -p "Password: " USER_PASSWORD
+        echo "Automated password input failed. Please enter the Oracle account password manually:"
+        echo "Running: ./bin/ethkey inspect --json --private $ORACLE_KEYFILE"
         echo ""
         
-        if [ -z "$USER_PASSWORD" ]; then
-            echo "❌ No password provided"
-            exit 1
-        fi
-        
-        echo "Trying with provided password..."
-        ORACLE_PRIV_OUTPUT=$(echo "$USER_PASSWORD" | ./bin/ethkey inspect --json --private "$ORACLE_KEYFILE" 2>/dev/null)
-        
-        # Clear password from memory for security
-        unset USER_PASSWORD
+        # Run ethkey directly for interactive input
+        ORACLE_PRIV_OUTPUT=$(./bin/ethkey inspect --json --private "$ORACLE_KEYFILE" 2>/dev/null)
         
         if [ $? -ne 0 ] || [ -z "$ORACLE_PRIV_OUTPUT" ]; then
-            echo "❌ Failed to extract oracle private key with provided password"
+            echo "❌ Failed to extract oracle private key"
             echo "Please check:"
             echo "- Password is correct"
             echo "- Keyfile is valid: $ORACLE_KEYFILE"
@@ -133,15 +154,18 @@ function generate_ownership_proof {
             exit 1
         fi
         
-        echo "✅ Successfully extracted private key with provided password"
+        echo "✅ Successfully extracted private key with interactive input"
     fi
     
     ORACLE_PRIVATE_KEY=$(echo "$ORACLE_PRIV_OUTPUT" | jq -r '.PrivateKey' 2>/dev/null)
     
     if [ -z "$ORACLE_PRIVATE_KEY" ] || [ "$ORACLE_PRIVATE_KEY" = "null" ]; then
-        echo "❌ Failed to get oracle private key"
+        echo "❌ Failed to extract PrivateKey from ethkey output"
+        echo "JSON output: $ORACLE_PRIV_OUTPUT"
         exit 1
     fi
+    
+    echo "✅ Private key extracted successfully"
     
     # Save private key to temporary file
     echo "$ORACLE_PRIVATE_KEY" > "$ORACLE_PRIV_KEYFILE"
