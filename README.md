@@ -60,7 +60,16 @@ You can also change other variable values as you see fit. This includes ports, k
 ```
 KEYPASS             # Account key password
 ORACLE_KEYPASS      # Oracle Account key password
-YOUR_IP             # Node IP
+YOUR_IP             # Your server's public IP address (Required for enode generation)
+```
+
+**Important:** Make sure to set `YOUR_IP` to your server's public IP address. This is required for:
+- Generating proper enode URLs with `make get-enode-offline`
+- Network connectivity for validator nodes
+
+Example:
+```bash
+YOUR_IP=192.168.1.100
 ```
 
 <a name="start-the-autonity-node"></a>
