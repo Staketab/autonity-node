@@ -21,6 +21,33 @@ function check_aut_version_compatibility {
     fi
 }
 
+function setup_aut_path {
+    echo "Setting up aut PATH..."
+    PIPX_PATH="$HOME/.local/bin"
+    
+    # Add to current session if not already in PATH
+    if [[ ":$PATH:" != *":$PIPX_PATH:"* ]]; then
+        export PATH="$PIPX_PATH:$PATH"
+        echo "✓ Added $PIPX_PATH to current session PATH"
+    fi
+    
+    # Verify aut is now accessible
+    if command -v aut >/dev/null 2>&1; then
+        echo "✓ aut is now accessible in PATH"
+        return 0
+    else
+        echo "❌ aut is still not accessible in PATH"
+        echo "Checking if aut binary exists..."
+        if [[ -f "$PIPX_PATH/aut" ]]; then
+            echo "✓ aut binary exists at $PIPX_PATH/aut"
+            echo "Try running: export PATH=\"$PIPX_PATH:\$PATH\""
+        else
+            echo "❌ aut binary not found at $PIPX_PATH/aut"
+        fi
+        return 1
+    fi
+}
+
 function install_aut {
     echo "Installing autonity-cli..."
     export PATH="$HOME/.local/bin:$PATH"
@@ -79,6 +106,7 @@ function main {
             
             if upgrade_aut; then
                 echo "Verifying upgraded installation..."
+                setup_aut_path
                 if check_aut_version_compatibility; then
                     echo "✓ aut upgrade completed successfully and is working correctly"
                 else
@@ -95,15 +123,27 @@ function main {
         
         if install_aut; then
             echo "Verifying installation..."
+            
+            # Setup PATH for current session
+            setup_aut_path
+            
             if check_aut_installed && check_aut_version_compatibility; then
                 echo "✓ aut installation completed successfully"
                 echo "You can now use the 'aut' command"
+                
+                # Show version info
+                echo "Installed aut version:"
+                aut --version 2>/dev/null || echo "Unable to display version"
             else
                 echo "⚠ aut was installed but may have compatibility issues"
                 echo "Try upgrading to the latest version:"
                 echo "  pipx upgrade autonity-cli"
                 echo "  or"
                 echo "  make aut-upgrade"
+                echo ""
+                echo "If aut command is not found, try:"
+                echo "  export PATH=\"$HOME/.local/bin:\$PATH\""
+                echo "  source ~/.bashrc"
             fi
         else
             echo "❌ Failed to install aut"
@@ -114,6 +154,9 @@ function main {
     echo ""
     echo "Usage: aut --help"
     echo "Note: If you experience ImportError issues, upgrade with: pipx upgrade autonity-cli"
+    echo ""
+    echo "If 'aut' command is not found, restart your terminal or run:"
+    echo "  export PATH=\"$HOME/.local/bin:\$PATH\""
 }
 
 # Run main function
