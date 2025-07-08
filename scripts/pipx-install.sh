@@ -43,6 +43,65 @@ function check_python_compatibility {
     fi
 }
 
+function check_pip_available {
+    echo "Checking if pip is available for $PYTHON_VERSION..."
+    
+    if $PYTHON_VERSION -m pip --version >/dev/null 2>&1; then
+        echo "✓ pip is available for $PYTHON_VERSION"
+        return 0
+    else
+        echo "❌ pip is not available for $PYTHON_VERSION"
+        return 1
+    fi
+}
+
+function install_pip {
+    echo "Installing pip for $PYTHON_VERSION..."
+    
+    # Try multiple methods to install pip
+    # Method 1: Using get-pip.py
+    if command -v wget >/dev/null 2>&1; then
+        echo "Downloading get-pip.py..."
+        wget -O /tmp/get-pip.py https://bootstrap.pypa.io/get-pip.py
+        if [[ -f /tmp/get-pip.py ]]; then
+            echo "Installing pip using get-pip.py..."
+            $PYTHON_VERSION /tmp/get-pip.py --user
+            rm -f /tmp/get-pip.py
+            return 0
+        fi
+    elif command -v curl >/dev/null 2>&1; then
+        echo "Downloading get-pip.py..."
+        curl -o /tmp/get-pip.py https://bootstrap.pypa.io/get-pip.py
+        if [[ -f /tmp/get-pip.py ]]; then
+            echo "Installing pip using get-pip.py..."
+            $PYTHON_VERSION /tmp/get-pip.py --user
+            rm -f /tmp/get-pip.py
+            return 0
+        fi
+    fi
+    
+    # Method 2: Using ensurepip module
+    echo "Trying to install pip using ensurepip..."
+    if $PYTHON_VERSION -m ensurepip --user >/dev/null 2>&1; then
+        echo "✓ pip installed using ensurepip"
+        return 0
+    fi
+    
+    # Method 3: Install python3-pip package
+    echo "Installing python3-pip package..."
+    sudo apt update
+    sudo apt install -y python3-pip
+    
+    # Method 4: Install pip for specific Python version
+    if [[ "$PYTHON_VERSION" == "python3.10" ]]; then
+        sudo apt install -y python3.10-pip || true
+    elif [[ "$PYTHON_VERSION" == "python3.8" ]]; then
+        sudo apt install -y python3.8-pip || true
+    fi
+    
+    return 0
+}
+
 function selective_cleanup {
     echo "Installing required Python version..."
     echo "This will only install missing Python packages, not remove existing ones."
@@ -77,13 +136,20 @@ function install_python {
     echo "Installing build dependencies..."
     sudo apt install -y build-essential zlib1g-dev libncurses5-dev libgdbm-dev \
                         libnss3-dev libssl-dev libreadline-dev libffi-dev \
-                        libsqlite3-dev wget lsb-release make
+                        libsqlite3-dev wget curl lsb-release make
     
     # Install Python and necessary packages
     echo "Installing Python packages..."
     sudo apt install -y python3-lib2to3 python3-distutils python3-pkg-resources \
                         python3-setuptools python3-wheel python3-pip \
                         "$REQUIRED_PYTHON" "$REQUIRED_PYTHON-venv" "$REQUIRED_PYTHON-dev"
+    
+    # Install pip for specific Python version
+    if [[ "$REQUIRED_PYTHON" == "python3.10" ]]; then
+        sudo apt install -y python3.10-pip || true
+    elif [[ "$REQUIRED_PYTHON" == "python3.8" ]]; then
+        sudo apt install -y python3.8-pip || true
+    fi
     
     # Check installation
     if command -v "$REQUIRED_PYTHON" >/dev/null 2>&1; then
@@ -104,9 +170,21 @@ function install_pipx {
     echo "Checking Python version..."
     $PYTHON_VERSION --version
     
+    # Check if pip is available, install if needed
+    if ! check_pip_available; then
+        echo "pip is not available for $PYTHON_VERSION. Installing pip..."
+        install_pip
+        
+        # Verify pip installation
+        if ! check_pip_available; then
+            echo "❌ Failed to install pip for $PYTHON_VERSION"
+            exit 1
+        fi
+    fi
+    
     # Upgrade pip
     echo "Upgrading pip..."
-    $PYTHON_VERSION -m pip install --upgrade pip
+    $PYTHON_VERSION -m pip install --upgrade pip --user
     
     # Install pipx
     echo "Installing pipx version $PIPX_VERSION..."
@@ -143,6 +221,7 @@ function install_pipx {
     else
         echo "⚠ pipx not found in PATH. Please restart your terminal or run:"
         echo "   export PATH=\"$PIPX_PATH:\$PATH\""
+        echo "Then try: pipx --version"
     fi
     
     echo "Installation completed successfully!"
