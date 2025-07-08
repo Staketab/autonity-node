@@ -21,6 +21,12 @@ function check_requirements {
         exit 1
     fi
     
+    if [ -z "$ORACLE_KEYPASS" ]; then
+        echo "❌ ORACLE_KEYPASS is not set in .env file"
+        echo "Please set the oracle account password in .env file"
+        exit 1
+    fi
+    
     if [ -z "$ORACLE_KEYFILE" ] || [ ! -f "$ORACLE_KEYFILE" ]; then
         echo "❌ Oracle keyfile not found: $ORACLE_KEYFILE"
         echo "Please create oracle account first: make acc-oracle"
@@ -82,12 +88,29 @@ function generate_ownership_proof {
     
     # Get oracle private key
     echo "Extracting oracle private key..."
+    
+    # Check if oracle password is set
+    if [ -z "$ORACLE_KEYPASS" ]; then
+        echo "❌ ORACLE_KEYPASS is not set in .env file"
+        echo "Please set the oracle account password in .env file"
+        exit 1
+    fi
+    
     chmod +x ./bin/ethkey
-    ORACLE_PRIV_OUTPUT=$(./bin/ethkey inspect --json --private "$ORACLE_KEYFILE" 2>/dev/null)
+    echo "Using oracle keyfile: $ORACLE_KEYFILE"
+    
+    # Pass password via stdin to ethkey
+    ORACLE_PRIV_OUTPUT=$(echo "$ORACLE_KEYPASS" | ./bin/ethkey inspect --json --private "$ORACLE_KEYFILE" 2>/dev/null)
     
     if [ $? -ne 0 ]; then
         echo "❌ Failed to extract oracle private key"
-        echo "Make sure the oracle keyfile is valid and accessible"
+        echo "Possible reasons:"
+        echo "- Wrong password in ORACLE_KEYPASS"
+        echo "- Keyfile is corrupted or invalid"
+        echo "- ethkey binary issue"
+        echo ""
+        echo "Debug: trying with error output..."
+        echo "$ORACLE_KEYPASS" | ./bin/ethkey inspect --json --private "$ORACLE_KEYFILE"
         exit 1
     fi
     
