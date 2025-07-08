@@ -188,7 +188,7 @@ function generate_ownership_proof {
     echo "Generating ownership proof..."
     sudo docker rm -f autonity-proof 2>/dev/null || true
     
-    PROOF_OUTPUT=$(sudo docker run -t -i --volume "$DATADIR":/autonity-chaindata --volume "$ORACLE_PRIV_KEYFILE":/oracle.key --name autonity-proof --rm "$TAG" genOwnershipProof --autonitykeys ./autonity-chaindata/autonity/autonitykeys --oraclekey oracle.key "$ORACLE_ADDRESS" 2>&1)
+    PROOF_OUTPUT=$(sudo docker run --volume "$DATADIR":/autonity-chaindata --volume "$ORACLE_PRIV_KEYFILE":/oracle.key --name autonity-proof --rm "$TAG" genOwnershipProof --autonitykeys ./autonity-chaindata/autonity/autonitykeys --oraclekey oracle.key "$ORACLE_ADDRESS" 2>&1)
     
     if [ $? -ne 0 ]; then
         echo "❌ Failed to generate ownership proof"
