@@ -8,12 +8,109 @@ function check_aut_installed {
     fi
 }
 
-echo "Installing Aut..."
-export PATH="$HOME/.local/bin:$PATH"
-pipx install --force git+https://github.com/autonity/aut
+function check_aut_version_compatibility {
+    echo "Checking aut version compatibility..."
+    
+    # Try to run a simple aut command to check for ImportError
+    if aut --version >/dev/null 2>&1; then
+        echo "✓ aut is working correctly"
+        return 0
+    else
+        echo "⚠ aut may have compatibility issues"
+        return 1
+    fi
+}
 
-if check_aut_installed; then
-    echo "The aut installation was completed successfully."
-else
-    echo "Error when installing aut."
-fi
+function install_aut {
+    echo "Installing autonity-cli..."
+    export PATH="$HOME/.local/bin:$PATH"
+    
+    if pipx install autonity-cli; then
+        echo "✓ autonity-cli installed successfully"
+        return 0
+    else
+        echo "❌ Failed to install autonity-cli"
+        return 1
+    fi
+}
+
+function upgrade_aut {
+    echo "Upgrading autonity-cli to latest version..."
+    export PATH="$HOME/.local/bin:$PATH"
+    
+    if pipx upgrade autonity-cli; then
+        echo "✓ autonity-cli upgraded successfully"
+        return 0
+    else
+        echo "❌ Failed to upgrade autonity-cli"
+        return 1
+    fi
+}
+
+function main {
+    echo "=== Autonity CLI Installation Script ==="
+    echo "This script will install or upgrade autonity-cli using pipx."
+    echo ""
+    
+    # Ensure PATH includes pipx installation directory
+    export PATH="$HOME/.local/bin:$PATH"
+    
+    # Check if pipx is available
+    if ! command -v pipx >/dev/null 2>&1; then
+        echo "❌ pipx is not installed or not in PATH"
+        echo "Please install pipx first by running: make pipx"
+        exit 1
+    fi
+    
+    if check_aut_installed; then
+        echo "aut is already installed"
+        
+        # Check if current version has compatibility issues
+        if check_aut_version_compatibility; then
+            echo "Current aut version is working correctly"
+            echo "If you want to upgrade to the latest version, you can run:"
+            echo "  pipx upgrade autonity-cli"
+        else
+            echo "Detected compatibility issues with current aut version"
+            echo "This may be due to ImportError: cannot import name 'NodeAddress' from 'autonity.validator'"
+            echo "Upgrading to the latest version..."
+            
+            if upgrade_aut; then
+                echo "Verifying upgraded installation..."
+                if check_aut_version_compatibility; then
+                    echo "✓ aut upgrade completed successfully and is working correctly"
+                else
+                    echo "⚠ aut was upgraded but still has compatibility issues"
+                    echo "Please check your Python environment and try reinstalling pipx"
+                fi
+            else
+                echo "❌ Failed to upgrade aut"
+                exit 1
+            fi
+        fi
+    else
+        echo "aut is not installed. Installing..."
+        
+        if install_aut; then
+            echo "Verifying installation..."
+            if check_aut_installed && check_aut_version_compatibility; then
+                echo "✓ aut installation completed successfully"
+                echo "You can now use the 'aut' command"
+            else
+                echo "⚠ aut was installed but may have compatibility issues"
+                echo "Try upgrading to the latest version:"
+                echo "  pipx upgrade autonity-cli"
+            fi
+        else
+            echo "❌ Failed to install aut"
+            exit 1
+        fi
+    fi
+    
+    echo ""
+    echo "Usage: aut --help"
+    echo "Note: If you experience ImportError issues, upgrade with: pipx upgrade autonity-cli"
+}
+
+# Run main function
+main

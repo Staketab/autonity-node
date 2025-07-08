@@ -43,6 +43,7 @@ You can set them up yourself or use the commands provided below:
 make pipx                        # Install Pipx
 make httpie                      # Install http
 make aut                         # Install aut binary
+make aut-upgrade                 # Upgrade aut binary to latest version
 make autrc                       # Create .autrc file
 # or
 make all                         # Install Pipx, httpie, make, aut binary, and create .autrc file
@@ -217,8 +218,9 @@ make bond                        # Bond tokens, pass the AMOUNT variable. Exampl
 make unbond                      # UnBond tokens, pass the AMOUNT variable. Example: `make unbond AMOUNT=0.5`
 make list                        # Check if your validator is in the list of all validators
 make get-comm                    # Check if your validator is in the list of all committees
-make send                        # Create a token transfer transaction. Pass the RECEPIENT and AMOUNT. Example: "make send RECEPIENT=0xf14 AMOUNT=0.2". Pass the NTN variable if you need to transfer ntn or TOKEN=12c1... if transfer token. Example: `make send RECEPIENT=0xf14 AMOUNT=0.2 NTN=1` or `make send RECEPIENT=0xf14 AMOUNT=0.2 TOKEN=12c1...`
+make send                        # Create a token transfer transaction. Pass the RECIPIENT and AMOUNT. Example: "make send RECIPIENT=0xf14 AMOUNT=0.2". Pass the NTN variable if you need to transfer ntn or TOKEN=12c1... if transfer token. Example: `make send RECIPIENT=0xf14 AMOUNT=0.2 NTN=1` or `make send RECIPIENT=0xf14 AMOUNT=0.2 TOKEN=12c1...`
 make val-info                    # View validator status
+make aut-upgrade                 # Upgrade aut binary to latest version (fixes ImportError issues)
 ```
 
 <a name="support"></a>

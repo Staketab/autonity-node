@@ -1,82 +1,164 @@
 #!/bin/bash
 
-function check {
-if command -v python >/dev/null 2>&1 || command -v python3 >/dev/null 2>&1; then
-    echo "Warning: This script will completely remove all installed Python versions from your system."
-    echo "This operation cannot be undone and may affect system stability if Python is used by system utilities."
+function check_python_compatibility {
+    # Check which Python versions are already installed
+    echo "Checking existing Python installations..."
+    
+    REQUIRED_PYTHON=""
+    UBUNTU_VERSION=$(lsb_release -r 2>/dev/null | awk '{print $2}' || echo "unknown")
+    
+    # Determine required Python version based on Ubuntu
+    if [[ "$(printf '%s\n' "20.04" "$UBUNTU_VERSION" | sort -V | head -n1)" == "20.04" && "$UBUNTU_VERSION" != "20.04" ]]; then
+        REQUIRED_PYTHON="python3.10"
+        FALLBACK_PYTHON="python3.8"
+    else
+        REQUIRED_PYTHON="python3.8"
+        FALLBACK_PYTHON="python3.10"
+    fi
+    
+    echo "Ubuntu version: $UBUNTU_VERSION"
+    echo "Required Python version: $REQUIRED_PYTHON"
+    
+    # Check availability of required Python version
+    if command -v "$REQUIRED_PYTHON" >/dev/null 2>&1; then
+        PYTHON_VERSION="$REQUIRED_PYTHON"
+        echo "✓ $REQUIRED_PYTHON is available"
+    elif command -v "$FALLBACK_PYTHON" >/dev/null 2>&1; then
+        PYTHON_VERSION="$FALLBACK_PYTHON"
+        echo "✓ Using fallback $FALLBACK_PYTHON"
+    elif command -v python3 >/dev/null 2>&1; then
+        PYTHON_VERSION="python3"
+        PYTHON_VER=$(python3 --version 2>&1 | awk '{print $2}')
+        echo "✓ Using system python3 (version $PYTHON_VER)"
+        
+        # Check version compatibility
+        if [[ "$PYTHON_VER" < "3.8" ]]; then
+            echo "⚠ Warning: Python version $PYTHON_VER may not be compatible with pipx 1.3.3"
+            echo "pipx requires Python 3.8 or higher"
+            selective_cleanup
+        fi
+    else
+        echo "❌ No suitable Python version found"
+        selective_cleanup
+    fi
+}
+
+function selective_cleanup {
+    echo "Installing required Python version..."
+    echo "This will only install missing Python packages, not remove existing ones."
     echo ""
+    
+    # Show what will be installed
+    echo "The following packages will be installed:"
+    echo "- $REQUIRED_PYTHON"
+    echo "- $REQUIRED_PYTHON-venv"
+    echo "- $REQUIRED_PYTHON-dev"
+    echo "- python3-pip (if not present)"
+    echo "- Build dependencies for Python packages"
+    echo ""
+    
     while true; do
-        read -p "Do you wish to continue with the cleanup? (yes/no) " yn
+        read -p "Do you want to proceed with installation? (yes/no) " yn
         case $yn in
-            [Yy]* ) cleanup; break;;
-            [Nn]* ) echo "Cleanup canceled."; break;;
+            [Yy]* ) install_python; break;;
+            [Nn]* ) echo "Installation canceled."; exit 1;;
             * ) echo "Please answer yes or no.";;
         esac
     done
-    install
-else
-    echo "Python is not installed on this system. No cleanup required."
-    install
-fi
 }
 
-function cleanup {
-    echo "Removing all installed Python versions..."
-    non_essential_packages=$(dpkg-query -W -f='${Package} ${Essential}\n' | grep python3 | grep -v 'yes' | awk '{print $1}')
-    sudo apt-get remove --purge $non_essential_packages -y
-    sudo apt install -y lsb-release
-}
-
-function install {
-    PIPX_VERSION="1.3.3"
-
-    UBUNTU_VERSION=$(lsb_release -r | awk '{print $2}')
-    PYTHON_VERSION="python3.8"
+function install_python {
+    echo "Installing Python $REQUIRED_PYTHON and dependencies..."
     
-    if [[ "$(printf '%s\n' "20.04" "$UBUNTU_VERSION" | sort -V | head -n1)" == "20.04" && "$UBUNTU_VERSION" != "20.04" ]]; then
-        PYTHON_VERSION="python3.10"
-    fi
-
-    echo "Ubuntu version: $UBUNTU_VERSION"
-    echo "Selected Python version: $PYTHON_VERSION"
-
-    echo "Updating package list..."
+    # Update package list
     sudo apt update
-
+    
+    # Install build dependencies
     echo "Installing build dependencies..."
-    sudo apt install -y build-essential zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev libssl-dev libreadline-dev libffi-dev libsqlite3-dev wget lsb-release make
+    sudo apt install -y build-essential zlib1g-dev libncurses5-dev libgdbm-dev \
+                        libnss3-dev libssl-dev libreadline-dev libffi-dev \
+                        libsqlite3-dev wget lsb-release make
+    
+    # Install Python and necessary packages
+    echo "Installing Python packages..."
+    sudo apt install -y python3-lib2to3 python3-distutils python3-pkg-resources \
+                        python3-setuptools python3-wheel python3-pip \
+                        "$REQUIRED_PYTHON" "$REQUIRED_PYTHON-venv" "$REQUIRED_PYTHON-dev"
+    
+    # Check installation
+    if command -v "$REQUIRED_PYTHON" >/dev/null 2>&1; then
+        PYTHON_VERSION="$REQUIRED_PYTHON"
+        echo "✓ $REQUIRED_PYTHON installed successfully"
+    else
+        echo "❌ Failed to install $REQUIRED_PYTHON"
+        exit 1
+    fi
+}
 
-    echo "Installing Python..."
-    sudo apt install -y python3-lib2to3 python3-distutils python3-pkg-resources python3-setuptools python3-wheel $PYTHON_VERSION $PYTHON_VERSION-venv $PYTHON_VERSION-dev python3-pip
-
+function install_pipx {
+    PIPX_VERSION="1.3.3"
+    
+    echo "Selected Python version: $PYTHON_VERSION"
+    
+    # Check Python version
     echo "Checking Python version..."
     $PYTHON_VERSION --version
-
+    
+    # Upgrade pip
     echo "Upgrading pip..."
     $PYTHON_VERSION -m pip install --upgrade pip
-
-    echo "Installing pipx..."
-    $PYTHON_VERSION -m pip install --user pipx
-
-    echo "Installing specific version of pipx..."
-    $PYTHON_VERSION -m pip install --user pipx==${PIPX_VERSION}
-
-    echo "Adding pipx to PATH if not already present..."
+    
+    # Install pipx
+    echo "Installing pipx version $PIPX_VERSION..."
+    $PYTHON_VERSION -m pip install --user pipx==$PIPX_VERSION
+    
+    # Set up PATH
+    echo "Setting up pipx PATH..."
     PIPX_PATH="$HOME/.local/bin"
-    if ! grep -qxF "export PATH=\"$PIPX_PATH:\$PATH\"" ~/.bashrc ; then
-        echo "Exporting pipx path to .bashrc"
+    
+    # Add to .bashrc if not already added
+    if ! grep -qxF "export PATH=\"$PIPX_PATH:\$PATH\"" ~/.bashrc 2>/dev/null; then
+        echo "Adding pipx to .bashrc"
         echo "export PATH=\"$PIPX_PATH:\$PATH\"" >> ~/.bashrc
     fi
-
+    
+    # Add to current session
     if [[ ":$PATH:" != *":$PIPX_PATH:"* ]]; then
         export PATH="$PIPX_PATH:$PATH"
     fi
-
-    echo "Reloading .bashrc to update environment variables..."
-    source $HOME/.bashrc
-
-    echo "Installation completed."
+    
+    # Add to .zshrc if using zsh
+    if [[ "$SHELL" == *"zsh"* ]] && [[ -f "$HOME/.zshrc" ]]; then
+        if ! grep -qxF "export PATH=\"$PIPX_PATH:\$PATH\"" ~/.zshrc 2>/dev/null; then
+            echo "Adding pipx to .zshrc"
+            echo "export PATH=\"$PIPX_PATH:\$PATH\"" >> ~/.zshrc
+        fi
+    fi
+    
+    # Verify pipx installation
+    echo "Verifying pipx installation..."
+    if command -v pipx >/dev/null 2>&1; then
+        echo "✓ pipx installed successfully"
+        pipx --version
+    else
+        echo "⚠ pipx not found in PATH. Please restart your terminal or run:"
+        echo "   export PATH=\"$PIPX_PATH:\$PATH\""
+    fi
+    
+    echo "Installation completed successfully!"
 }
 
+function main {
+    echo "=== pipx Installation Script ==="
+    echo "This script will install pipx version 1.3.3 with a compatible Python version."
+    echo ""
+    
+    # Check Python compatibility
+    check_python_compatibility
+    
+    # Install pipx
+    install_pipx
+}
 
-check
+# Run main function
+main
