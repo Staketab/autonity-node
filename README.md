@@ -222,7 +222,7 @@ make down                        # Stop all containers
 make log-o                       # View Oracle node logs
 make clean                       # Stop all containers and clean the DATADIR with the blockchain database
 make get-enode                   # Get ENODE from running node
-make get-enode-offline           # Generate validator keys and ENODE offline using Docker (saves to DATADIR/keys/)
+make get-enode-offline           # Generate validator keys and ENODE offline using Docker (saves summary file)
 make compute                     # Get the validator address
 make bond                        # Bond tokens, pass the AMOUNT variable. Example: `make bond AMOUNT=0.5`
 make unbond                      # UnBond tokens, pass the AMOUNT variable. Example: `make unbond AMOUNT=0.5`
@@ -232,6 +232,19 @@ make send                        # Create a token transfer transaction. Pass the
 make val-info                    # View validator status
 make aut-upgrade                 # Upgrade aut binary to latest version (fixes ImportError issues)
 ```
+
+### Offline Key Generation
+
+The `make get-enode-offline` command generates validator keys without requiring a running node:
+
+- **Generates**: Node address, public keys, and enode URL
+- **Saves to**: 
+  - `$(DATADIR)/autonity/` - Validator keys
+  - `$(DATADIR)/signs/enode-offline` - Enode URL
+  - `$(DATADIR)/signs/keys-summary.txt` - Complete summary
+- **Requires**: `YOUR_IP` set in `.env` file
+
+To view generated enode: `cat $(DATADIR)/signs/enode-offline`
 
 <a name="support"></a>
 # Support

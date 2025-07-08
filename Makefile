@@ -109,41 +109,8 @@ get-enode:
 	@export PATH="$$HOME/.local/bin:$$PATH" && aut node info | jq -r '.admin_enode'
 
 get-enode-offline:
-	@echo "Generating validator node keys and enode offline using Docker..."
-	@if [ -z "$(YOUR_IP)" ]; then \
-		echo "❌ YOUR_IP is not set in .env file"; \
-		echo "Please set YOUR_IP in .env file to your node's IP address"; \
-		exit 1; \
-	fi
-	@mkdir -p $(DATADIR)/autonity $(DATADIR)/signs
-	@echo "Running genAutonityKeys..."
-	@OUTPUT=$$(sudo docker run -t -i --volume $(DATADIR):/autonity-chaindata --name autonity-keygen --rm $(TAG) genAutonityKeys --writeaddress /autonity-chaindata/autonity/autonitykeys 2>&1); \
-	echo "$$OUTPUT"; \
-	NODE_PUBLIC_KEY=$$(echo "$$OUTPUT" | grep "Node public key:" | sed 's/Node public key: 0x//'); \
-	NODE_ADDRESS=$$(echo "$$OUTPUT" | grep "Node address:" | sed 's/Node address: //'); \
-	CONSENSUS_PUBLIC_KEY=$$(echo "$$OUTPUT" | grep "Consensus public key:" | sed 's/Consensus public key: //'); \
-	if [ -n "$$NODE_PUBLIC_KEY" ] && [ -n "$$NODE_ADDRESS" ]; then \
-		echo ""; \
-		echo "=== Generated Keys ==="; \
-		echo "Node address: $$NODE_ADDRESS"; \
-		echo "Node public key: 0x$$NODE_PUBLIC_KEY"; \
-		echo "Consensus public key: $$CONSENSUS_PUBLIC_KEY"; \
-		echo ""; \
-		echo "=== Generated enode ==="; \
-		ENODE="enode://$$NODE_PUBLIC_KEY@$(YOUR_IP):30303"; \
-		echo "$$ENODE"; \
-		echo "$$ENODE" > $(DATADIR)/signs/enode-offline; \
-		echo ""; \
-		echo "✅ Keys and enode generated successfully!"; \
-		echo "Keys saved to: $(DATADIR)/autonity/"; \
-		echo "Enode saved to: $(DATADIR)/signs/enode-offline"; \
-		echo "Your IP: $(YOUR_IP)"; \
-	else \
-		echo "❌ Failed to extract node public key from output"; \
-		echo "Checking generated files:"; \
-		ls -la $(DATADIR)/autonity/ 2>/dev/null || echo "Autonity directory not found"; \
-		exit 1; \
-	fi
+	@chmod +x ./scripts/get-enode-offline.sh
+	@./scripts/get-enode-offline.sh
 
 get-priv:
 	@chmod +x ./bin/ethkey
