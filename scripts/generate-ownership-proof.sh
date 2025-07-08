@@ -157,11 +157,22 @@ function generate_ownership_proof {
         echo "✅ Successfully extracted private key with interactive input"
     fi
     
-    ORACLE_PRIVATE_KEY=$(echo "$ORACLE_PRIV_OUTPUT" | jq -r '.PrivateKey' 2>/dev/null)
+    # Clean the output - extract only JSON part (everything from first '{' to last '}')
+    CLEAN_JSON=$(echo "$ORACLE_PRIV_OUTPUT" | sed -n '/{/,/}/p' | tr -d '\n' | sed 's/.*{/{/' | sed 's/}.*/}/')
+    
+    if [ -z "$CLEAN_JSON" ]; then
+        echo "❌ Failed to extract JSON from ethkey output"
+        echo "Raw output: $ORACLE_PRIV_OUTPUT"
+        exit 1
+    fi
+    
+    echo "Extracted JSON: $CLEAN_JSON"
+    
+    ORACLE_PRIVATE_KEY=$(echo "$CLEAN_JSON" | jq -r '.PrivateKey' 2>/dev/null)
     
     if [ -z "$ORACLE_PRIVATE_KEY" ] || [ "$ORACLE_PRIVATE_KEY" = "null" ]; then
-        echo "❌ Failed to extract PrivateKey from ethkey output"
-        echo "JSON output: $ORACLE_PRIV_OUTPUT"
+        echo "❌ Failed to extract PrivateKey from JSON"
+        echo "Clean JSON: $CLEAN_JSON"
         exit 1
     fi
     
