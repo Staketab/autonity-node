@@ -70,6 +70,8 @@ function main {
             echo "Current aut version is working correctly"
             echo "If you want to upgrade to the latest version, you can run:"
             echo "  pipx upgrade autonity-cli"
+            echo "  or"
+            echo "  make aut-upgrade"
         else
             echo "Detected compatibility issues with current aut version"
             echo "This may be due to ImportError: cannot import name 'NodeAddress' from 'autonity.validator'"
@@ -100,6 +102,8 @@ function main {
                 echo "⚠ aut was installed but may have compatibility issues"
                 echo "Try upgrading to the latest version:"
                 echo "  pipx upgrade autonity-cli"
+                echo "  or"
+                echo "  make aut-upgrade"
             fi
         else
             echo "❌ Failed to install aut"

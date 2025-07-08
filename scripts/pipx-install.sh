@@ -43,6 +43,19 @@ function check_python_compatibility {
     fi
 }
 
+function check_python_venv_available {
+    echo "Checking if Python venv module is available..."
+    
+    # Check if we can create a virtual environment
+    if $PYTHON_VERSION -m venv --help >/dev/null 2>&1; then
+        echo "✓ Python venv module is available"
+        return 0
+    else
+        echo "❌ Python venv module is not available"
+        return 1
+    fi
+}
+
 function check_pip_available {
     echo "Checking if pip is available for $PYTHON_VERSION..."
     
@@ -102,6 +115,28 @@ function install_pip {
     return 0
 }
 
+function install_python_dependencies {
+    echo "Installing Python dependencies for pipx..."
+    
+    # Update package list
+    sudo apt update
+    
+    # Install necessary Python packages including venv
+    echo "Installing python3-venv, python3-pip, and related packages..."
+    
+    # Install general Python packages
+    sudo apt install -y python3-venv python3-pip python3-setuptools python3-wheel python3-distutils
+    
+    # Install version-specific packages
+    if [[ "$PYTHON_VERSION" == "python3.10" ]]; then
+        sudo apt install -y python3.10-venv python3.10-pip python3.10-distutils || true
+    elif [[ "$PYTHON_VERSION" == "python3.8" ]]; then
+        sudo apt install -y python3.8-venv python3.8-pip python3.8-distutils || true
+    fi
+    
+    echo "✓ Python dependencies installed"
+}
+
 function selective_cleanup {
     echo "Installing required Python version..."
     echo "This will only install missing Python packages, not remove existing ones."
@@ -112,6 +147,7 @@ function selective_cleanup {
     echo "- $REQUIRED_PYTHON"
     echo "- $REQUIRED_PYTHON-venv"
     echo "- $REQUIRED_PYTHON-dev"
+    echo "- $REQUIRED_PYTHON-pip"
     echo "- python3-pip (if not present)"
     echo "- Build dependencies for Python packages"
     echo ""
@@ -141,14 +177,14 @@ function install_python {
     # Install Python and necessary packages
     echo "Installing Python packages..."
     sudo apt install -y python3-lib2to3 python3-distutils python3-pkg-resources \
-                        python3-setuptools python3-wheel python3-pip \
+                        python3-setuptools python3-wheel python3-pip python3-venv \
                         "$REQUIRED_PYTHON" "$REQUIRED_PYTHON-venv" "$REQUIRED_PYTHON-dev"
     
-    # Install pip for specific Python version
+    # Install pip and venv for specific Python version
     if [[ "$REQUIRED_PYTHON" == "python3.10" ]]; then
-        sudo apt install -y python3.10-pip || true
+        sudo apt install -y python3.10-pip python3.10-venv python3.10-distutils || true
     elif [[ "$REQUIRED_PYTHON" == "python3.8" ]]; then
-        sudo apt install -y python3.8-pip || true
+        sudo apt install -y python3.8-pip python3.8-venv python3.8-distutils || true
     fi
     
     # Check installation
@@ -169,6 +205,16 @@ function install_pipx {
     # Check Python version
     echo "Checking Python version..."
     $PYTHON_VERSION --version
+    
+    # Install Python dependencies first
+    install_python_dependencies
+    
+    # Check if venv is available
+    if ! check_python_venv_available; then
+        echo "❌ Python venv module is still not available after installation"
+        echo "This is required for pipx to work correctly"
+        exit 1
+    fi
     
     # Check if pip is available, install if needed
     if ! check_pip_available; then
