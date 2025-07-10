@@ -184,11 +184,22 @@ function generate_ownership_proof {
     # Get oracle account address  
     ORACLE_ADDRESS=$(cat "$DATADIR/signs/oracle-address")
     
+    # Get treasury account address
+    TREASURY_ACCOUNT_ADDRESS=$(cat "$DATADIR/signs/account-address")
+    
+    if [ -z "$TREASURY_ACCOUNT_ADDRESS" ]; then
+        echo "❌ Treasury account address not found: $DATADIR/signs/account-address"
+        echo "Please generate treasury account first: make acc-treasury"
+        exit 1
+    fi
+    
+    echo "Treasury account address: $TREASURY_ACCOUNT_ADDRESS"
+    
     # Generate ownership proof
     echo "Generating ownership proof..."
     sudo docker rm -f autonity-proof 2>/dev/null || true
     
-    PROOF_OUTPUT=$(sudo docker run --volume "$DATADIR":/autonity-chaindata --volume "$ORACLE_PRIV_KEYFILE":/oracle.key --name autonity-proof --rm "$TAG" genOwnershipProof --autonitykeys ./autonity-chaindata/autonity/autonitykeys --oraclekey oracle.key "$ORACLE_ADDRESS" 2>&1)
+    PROOF_OUTPUT=$(sudo docker run --volume "$DATADIR":/autonity-chaindata --volume "$ORACLE_PRIV_KEYFILE":/oracle.key --name autonity-proof --rm "$TAG" genOwnershipProof --autonitykeys ./autonity-chaindata/autonity/autonitykeys --oraclekey oracle.key "$TREASURY_ACCOUNT_ADDRESS" 2>&1)
     
     if [ $? -ne 0 ]; then
         echo "❌ Failed to generate ownership proof"
@@ -211,6 +222,7 @@ function generate_ownership_proof {
     
     echo "✅ Ownership proof generated"
     echo "   Oracle address: $ORACLE_ADDRESS"
+    echo "   Treasury address: $TREASURY_ACCOUNT_ADDRESS"
     echo "   Proof: $PROOF"
     echo "   Saved to: $DATADIR/signs/proof"
     echo ""
@@ -220,6 +232,7 @@ function create_summary {
     echo "=== Creating Summary ==="
     
     ORACLE_ADDRESS=$(cat "$DATADIR/signs/oracle-address" 2>/dev/null)
+    TREASURY_ACCOUNT_ADDRESS=$(cat "$DATADIR/signs/account-address" 2>/dev/null)
     PROOF=$(cat "$DATADIR/signs/proof" 2>/dev/null)
     
     cat > "$DATADIR/signs/ownership-proof-summary.txt" << EOF
@@ -232,18 +245,23 @@ Oracle Address: $ORACLE_ADDRESS
 Oracle Keyfile: $ORACLE_KEYFILE
 Oracle Private Key File: $ORACLE_PRIV_KEYFILE
 
+=== Treasury Account Information ===
+Treasury Address: $TREASURY_ACCOUNT_ADDRESS
+
 === Ownership Proof ===
 Proof: $PROOF
+Generated for Treasury Address: $TREASURY_ACCOUNT_ADDRESS
 
 === Files Generated ===
 - Oracle address: $DATADIR/signs/oracle-address
+- Treasury address: $DATADIR/signs/account-address
 - Ownership proof: $DATADIR/signs/proof
 - Oracle private key: $ORACLE_PRIV_KEYFILE
 - This summary: $DATADIR/signs/ownership-proof-summary.txt
 
 === Usage ===
 Use the ownership proof for validator registration:
-- Oracle Address: $ORACLE_ADDRESS
+- Treasury Address: $TREASURY_ACCOUNT_ADDRESS
 - Ownership Proof: $PROOF
 
 === Security Note ===
@@ -268,6 +286,7 @@ function main {
     echo ""
     echo "📋 Summary:"
     echo "   Oracle Address: $(cat "$DATADIR/signs/oracle-address")"
+    echo "   Treasury Address: $(cat "$DATADIR/signs/account-address")"
     echo "   Ownership Proof: $(cat "$DATADIR/signs/proof")"
     echo ""
     echo "📁 Files saved to: $DATADIR/signs/"
